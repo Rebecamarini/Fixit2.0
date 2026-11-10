@@ -1,0 +1,10 @@
+:root { color-scheme: light; font-family: Arial, Helvetica, sans-serif; color: #19352e; background: #f3f6f2; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { width: min(100% - 3rem, 48rem); margin: 15vh auto; padding: clamp(1.5rem, 5vw, 4rem); background: white; border: 1px solid #dce5dc; border-radius: 1rem; }
+h1 { font-size: clamp(3rem, 8vw, 5rem); letter-spacing: -.05em; margin: 1rem 0; }
+h1 span { color: #417a61; }
+p { line-height: 1.7; }
+.eyebrow { font-size: .75rem; font-weight: bold; letter-spacing: .12em; }
+a { display: inline-block; margin-top: 1rem; color: #235d43; font-weight: bold; text-underline-offset: .25em; }
+a:focus-visible { outline: 3px solid #235d43; outline-offset: 5px; }
