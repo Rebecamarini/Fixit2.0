@@ -17,7 +17,9 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
-    "verify": "npm run lint && npm run typecheck && npm run build"
+    "supabase:check": "node scripts/check-supabase.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "verify": "npm test && npm run lint && npm run typecheck && npm run build"
   },
   "dependencies": {
     "@supabase/ssr": "0.10.3",
