@@ -1,7 +1,7 @@
 # SETUP — Configurar Supabase e integração inicial
 
 Cartão: https://trello.com/c/cMgHVTuv
-Status: entrevista encerrada; pronta para implementação mediante pedido separado.
+Status: implementada e validada em 2026-11-10 na branch `integration/setup-supabase`, após pedido separado do usuário. Evidências em [setup-supabase-validation.md](setup-supabase-validation.md).
 
 ## Problem Statement
 
@@ -73,4 +73,4 @@ A escolha inicial de somente cloud foi revisada explicitamente pelo usuário: a 
 
 Esta spec registra decisões técnicas de setup; não introduz termos de domínio nem substitui o glossário. Não há nova decisão que exija ADR separado.
 
-A entrevista foi encerrada pelo usuário. A etiqueta ready-for-agent significa que a tarefa está especificada; não autoriza iniciar implementação nesta sessão sem pedido claro e separado, conforme AGENTS.md. Nenhum projeto ou recurso foi criado durante a entrevista.
+A entrevista foi encerrada pelo usuário. A implementação foi posteriormente autorizada em pedido claro e separado via `implement-spec`, conforme AGENTS.md. Nenhum projeto ou recurso foi criado durante a entrevista; a criação e as validações ocorreram na implementação.

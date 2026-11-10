@@ -29,4 +29,10 @@ A página temporária foi removida após a validação; nenhum endpoint ou tela 
 
 ## Verificação final do código
 
-Pendente registrar o resultado final após a correção apontada pela revisão: bloquear uma chave privilegiada na configuração pública antes de compilar/servir código para o navegador.
+Concluída na branch `integration/setup-supabase`:
+
+- `npm run verify`: nove testes, lint, tipos e build aprovados.
+- Revisão Standards: nenhum achado. Revisão Spec: um achado de segurança corrigido e reavaliado sem pendências.
+- O preflight do Next.js bloqueia chaves privilegiadas antes da compilação ou do serviço de código cliente. A regressão executa builds reais com valores sentinela de chave secreta e `service_role`, confirmando falha antes de gerar o bundle e sem imprimir os valores.
+- O build final contém somente a página inicial e a página padrão de não encontrado; nenhuma rota técnica permaneceu.
+- `git diff --check`: aprovado.
