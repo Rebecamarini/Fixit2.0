@@ -4,4 +4,5 @@ import { validateSupabasePublishableKey } from "./src/lib/supabase/config.ts";
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 if (key) validateSupabasePublishableKey(key, process.env.NEXT_PUBLIC_SUPABASE_ENV);
 
-export default {};
+const nextConfig = {};
+export default nextConfig;
