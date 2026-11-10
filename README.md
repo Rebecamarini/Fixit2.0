@@ -28,6 +28,8 @@ Preencha os três campos dos arquivos reais, que são ignorados pelo Git:
 
 A URL deve conter apenas protocolo, host e porta opcional. O validador recusa URL cloud em configuração local, loopback no cloud e chaves privilegiadas. Nunca coloque chaves secretas ou `service_role` em `NEXT_PUBLIC_`.
 
+O Next.js também valida a chave na inicialização e antes do build, impedindo que uma chave privilegiada configurada seja incorporada ao bundle público, mesmo se os outros campos estiverem ausentes.
+
 ## Supabase local
 
 Para infraestrutura local, com Docker disponível:

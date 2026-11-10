@@ -31,6 +31,11 @@ export function getSupabaseConfig(env: Environment) {
   }
   const publishableKey = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!publishableKey) throw new Error("Configure NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.");
+  validateSupabasePublishableKey(publishableKey, environment);
+  return { environment, url, publishableKey };
+}
+
+export function validateSupabasePublishableKey(publishableKey: string, environment: string | undefined) {
   let legacyAnon = false;
   if (publishableKey.startsWith("eyJ")) {
     try {
@@ -42,5 +47,4 @@ export function getSupabaseConfig(env: Environment) {
   if (!publishableKey.startsWith("sb_publishable_") && !(environment === "local" && legacyAnon)) {
     throw new Error("Use uma chave publicável sb_publishable_; apenas local aceita a chave anon legada. Chaves privilegiadas são proibidas.");
   }
-  return { environment, url, publishableKey };
 }

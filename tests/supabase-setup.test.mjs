@@ -8,6 +8,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const command = fileURLToPath(new URL("../scripts/check-supabase.mjs", import.meta.url));
+const projectDir = fileURLToPath(new URL("..", import.meta.url));
 
 async function run(args, envFile, filename = ".env.supabase.local") {
   const cwd = await mkdtemp(join(tmpdir(), "fixit-setup-test-"));
@@ -109,5 +110,25 @@ test("cloud recusa URLs locais e sem HTTPS antes de fazer a consulta", async () 
     const result = await run(["cloud"], `NEXT_PUBLIC_SUPABASE_ENV=cloud\nNEXT_PUBLIC_SUPABASE_URL=${url}\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_test\n`, ".env.supabase.cloud");
     assert.equal(result.code, 1);
     assert.match(result.output, /cloud exige HTTPS fora de loopback/);
+  }
+});
+
+test("o build Next rejeita chaves privilegiadas antes de gerar o bundle, mesmo com configuração parcial", async () => {
+  const serviceKey = `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ role: "service_role", sentinel: "nao_publicar" })).toString("base64url")}.signature`;
+  for (const key of ["sb_secret_nao_publicar_no_bundle", serviceKey]) {
+    const result = await new Promise((resolve) => {
+      const child = spawn(process.execPath, [fileURLToPath(import.meta.resolve("next/dist/bin/next")), "build"], {
+        cwd: projectDir,
+        env: { ...process.env, NEXT_PUBLIC_SUPABASE_ENV: "", NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: key, NEXT_TELEMETRY_DISABLED: "1" },
+      });
+      let output = "";
+      child.stdout.on("data", (data) => { output += data; });
+      child.stderr.on("data", (data) => { output += data; });
+      child.on("close", (code) => resolve({ code, output }));
+    });
+    assert.notEqual(result.code, 0);
+    assert.match(result.output, /Chaves privilegiadas são proibidas/);
+    assert.doesNotMatch(result.output, /Creating an optimized production build/);
+    assert.ok(!result.output.includes(key));
   }
 });
