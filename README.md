@@ -135,8 +135,9 @@ npm run db:check-api -- cloud
 
 O comando lê apenas `.env.supabase.<ambiente>`, exige sessão válida, confirma a
 consulta técnica e verifica SELECT/INSERT/UPDATE/DELETE nas três tabelas com
-`anon` e `authenticated`. Não aceita erro de rede ou token inválido como prova
-de bloqueio. Usa IDs inexistentes e não cria conta nem dados de negócio; quem
+`anon` e `authenticated`. Exige erro explícito de permissão ou tabela não exposta em cada operação;
+respostas vazias bem-sucedidas, erros de rede e token inválido não comprovam
+o bloqueio. Usa IDs inexistentes e não cria conta nem dados de negócio; quem
 provisionou a conta de teste deve removê-la ao terminar. Não publique o JWT nem
 use chave privilegiada como sessão de teste. Não inclua estes testes reais no
 comando padrão `verify`, que continua reproduzível sem credenciais de banco.
