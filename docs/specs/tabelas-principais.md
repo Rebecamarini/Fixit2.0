@@ -1,7 +1,7 @@
 # Tabelas principais do sistema
 
 Cartão: https://trello.com/c/vrIpSvNe
-Status: spec consolidada em 2026-11-11 após entrevista e revisão pelo usuário. Pronta para implementação; execução depende de pedido claro e separado.
+Status: implementada e validada em 2026-11-11 na branch `integration/tabelas-principais`, após pedido claro e separado via implement-spec. Evidências em [tabelas-principais-validation.md](tabelas-principais-validation.md).
 
 ## Problem Statement
 

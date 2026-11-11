@@ -97,7 +97,7 @@ npm run verify
 
 Executa testes de comportamento do comando/configuração, lint, tipos e build. Os testes usam uma API HTTP controlada e não substituem as consultas reais nos dois ambientes. A validação dos clientes no navegador e servidor deve ser registrada na evidência do cartão.
 
-Consulte a [spec do setup](docs/specs/setup-supabase.md), `CONTEXT.md`, `docs/adr/` e `docs/agents/` para escopo e convenções. Tabelas de negócio, autenticação e RLS continuam nos próximos cartões do Trello.
+Consulte a [spec do setup](docs/specs/setup-supabase.md), `CONTEXT.md`, `docs/adr/` e `docs/agents/` para escopo e convenções. As tabelas de negócio estão descritas abaixo; autenticação e políticas RLS por papel continuam nos próximos cartões do Trello.
 
 ## Tabelas principais
 
