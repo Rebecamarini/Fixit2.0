@@ -7,26 +7,87 @@ Novo projeto de gestão de solicitações de manutenção com escopo reduzido.
 
 Stack da versão anterior: Next.js 16.4.2, React 19.3.1, TypeScript 5.9.3 e Supabase. Node 24.18.0 e npm 11.16.0; versões fixadas no package.json e package-lock.json.
 
-## Desenvolvimento
+## Preparação e ambientes
+
+Use Node e npm nas versões acima. Docker Engine ativo (Docker Desktop ou Colima) é necessário para Supabase local.
 
 ```sh
 nvm use
 npm ci
-cp .env.example .env.local
-npm run dev
+cp .env.example .env.supabase.local
+cp .env.example .env.supabase.cloud
 ```
 
-A página inicial funciona sem credenciais. Preencha as variáveis com URL e chave publicável do ambiente Supabase destinado ao novo projeto quando integrar as funcionalidades. Nunca coloque chaves secretas ou service_role em variáveis NEXT_PUBLIC_.
+Preencha os três campos dos arquivos reais, que são ignorados pelo Git:
+
+| Variável | Local | Cloud |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_ENV` | `local` | `cloud` |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL local, normalmente `http://127.0.0.1:55321` | Project URL HTTPS do novo projeto |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Chave publicável local; `anon` legada também aceita somente aqui | Chave `sb_publishable_...` |
+
+A URL deve conter apenas protocolo, host e porta opcional. O validador recusa URL cloud em configuração local, loopback no cloud e chaves privilegiadas. Nunca coloque chaves secretas ou `service_role` em `NEXT_PUBLIC_`.
+
+O Next.js também valida a chave na inicialização e antes do build, impedindo que uma chave privilegiada configurada seja incorporada ao bundle público, mesmo se os outros campos estiverem ausentes.
+
+## Supabase local
 
 Para infraestrutura local, com Docker disponível:
 
 ```sh
 npm run supabase:start
 npm run supabase:status
-npm run supabase:stop
+npx supabase migration up --local
 ```
 
-Os serviços usam portas próprias, diferentes da configuração padrão do projeto antigo. Não há migrations ou funcionalidades de autenticação nesta base.
+Copie a URL e a chave **publicável** da saída do status para `.env.supabase.local`; não copie chaves secretas. As portas próprias da v2 são API `55321`, banco `55322`, Studio `55323` e e-mail local `55324`, separadas da versão antiga.
+
+`supabase start` aplica migrations ao inicializar um banco novo; `migration up --local` aplica pendências em um banco existente. Para parar preservando os dados, use `npm run supabase:stop`.
+
+## Supabase cloud
+
+Projeto exclusivo da v2: **fixit-v2**, referência `wvdqynbngsveqyzsphre`, organização **Junior's Org**, região **São Paulo (sa-east-1)**. A criação foi cotada em **US$ 0/mês** no plano gratuito; não contratar recursos pagos para este setup.
+
+No [painel do projeto](https://supabase.com/dashboard/project/wvdqynbngsveqyzsphre), copie Project URL e chave **Publishable** para `.env.supabase.cloud` e altere seu marcador para `cloud`. Não use o projeto da versão anterior.
+
+A migration técnica já foi aplicada ao novo projeto. Para aplicar migrations futuras pelo CLI fixado neste repositório, confira o destino e use:
+
+```sh
+npx supabase login
+npx supabase link --project-ref wvdqynbngsveqyzsphre
+npx supabase db push --linked --dry-run
+npx supabase db push --linked
+```
+
+O login e o banco podem solicitar autenticação; credenciais reais não devem ser versionadas. Migrations e dados não sincronizam automaticamente entre local e cloud.
+
+## Verificação de conexão
+
+```sh
+npm run supabase:check -- local
+npm run supabase:check -- cloud
+```
+
+Cada comando lê **somente** `.env.supabase.local` ou `.env.supabase.cloud`, respectivamente, sem recorrer ao shell ou ao arquivo ativo da aplicação. Usa o SDK para chamar `setup_healthcheck()` pela Data API e espera `fixit-v2:ok`. A função não acessa dados de negócio, usa permissões do chamador e permite execução aos papéis de API `anon` e `authenticated`.
+
+Sucesso imprime o ambiente e a confirmação. Falha de configuração, acesso, rede (limite de 10 segundos) ou resposta inesperada retorna código 1, sem imprimir chaves ou conteúdo remoto. Se a função não for encontrada, confira se a migration foi aplicada ao destino selecionado.
+
+## Aplicação Next.js
+
+Escolha o ambiente ativo explicitamente:
+
+```sh
+cp .env.supabase.local .env.local
+# Para cloud, use no lugar do comando acima:
+# cp .env.supabase.cloud .env.local
+npm run dev
+```
+
+Reinicie o servidor ao trocar o arquivo. Para produção, configure os três campos antes de `npm run build`: `NEXT_PUBLIC_` é incorporado ao JavaScript do navegador durante o build, portanto a troca exige um novo build. Evite exportar variáveis homônimas no shell, pois têm precedência sobre `.env.local` no Next.js.
+
+Clientes disponíveis: `createBrowserSupabaseClient` em `src/lib/supabase/client.ts` e `createServerSupabaseClient` em `src/lib/supabase/server.ts`. O servidor é protegido por `server-only` e cria o cliente por chamada. Ambos usam somente chave publicável e são **sem sessão** neste setup: não persistem usuário, não atualizam tokens e não processam login pela URL. Cookies, autenticação e permissões do produto pertencem aos próximos cartões.
+
+A página inicial funciona sem credenciais; clientes só são criados onde forem usados. Não há tela ou endpoint técnico permanente no produto.
 
 ## Validação
 
@@ -34,19 +95,6 @@ Os serviços usam portas próprias, diferentes da configuração padrão do proj
 npm run verify
 ```
 
-Executa lint, tipos e build. As histórias do produto continuam pendentes no Trello. Consulte CONTEXT.md, docs/adr/ e docs/agents/ para domínio e convenções das skills. Os arquivos docs/agents/*.md podem ser editados diretamente; refaça o setup apenas para trocar o rastreador ou reiniciar a configuração.
+Executa testes de comportamento do comando/configuração, lint, tipos e build. Os testes usam uma API HTTP controlada e não substituem as consultas reais nos dois ambientes. A validação dos clientes no navegador e servidor deve ser registrada na evidência do cartão.
 
-## Inicialização e publicação do Git
-
-A sessão que preparou esta base não tinha permissão para criar `.git`. A publicação pelo conector GitHub também foi recusada por falta de acesso da integração (HTTP 403). Nenhum commit foi publicado.
-
-No terminal, dentro desta pasta, execute:
-
-```sh
-sh scripts/init-git.sh
-git add .
-git commit -m "chore: initialize FixIt 2.0 base"
-git push -u origin main
-```
-
-O script inicia a branch main e configura origin para Rebecamarini/Fixit2.0. Os arquivos de ambiente reais, node_modules e builds estão no .gitignore.
+Consulte a [spec do setup](docs/specs/setup-supabase.md), `CONTEXT.md`, `docs/adr/` e `docs/agents/` para escopo e convenções. Tabelas de negócio, autenticação e RLS continuam nos próximos cartões do Trello.
