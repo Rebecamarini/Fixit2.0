@@ -98,3 +98,45 @@ npm run verify
 Executa testes de comportamento do comando/configuração, lint, tipos e build. Os testes usam uma API HTTP controlada e não substituem as consultas reais nos dois ambientes. A validação dos clientes no navegador e servidor deve ser registrada na evidência do cartão.
 
 Consulte a [spec do setup](docs/specs/setup-supabase.md), `CONTEXT.md`, `docs/adr/` e `docs/agents/` para escopo e convenções. Tabelas de negócio, autenticação e RLS continuam nos próximos cartões do Trello.
+
+## Tabelas principais
+
+Contrato: [spec de tabelas](docs/specs/tabelas-principais.md). A migration cria
+`profiles`, `solicitacoes` e `historico`, com restrições no banco, histórico
+imutável e RLS habilitada. O acesso comum pela API permanece fechado até o
+cartão de políticas. Não há geração automática de eventos nesta entrega.
+
+Aplique migrations pendentes com os comandos de local/cloud descritos acima.
+Confirme o projeto **fixit-v2** antes de qualquer aplicação cloud. A verificação
+SQL é autocontida, usa fixtures dentro de uma transação e termina em rollback:
+
+```sh
+# Supabase local em Docker; configure DOCKER_CONTEXT se usar Colima.
+docker exec -i supabase_db_fixit-v2 psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/tabelas-principais.sql
+
+# Cloud: conexão PostgreSQL do projeto v2, guardada fora do Git.
+# Requer o cliente psql; não coloque a senha diretamente no comando/histórico.
+psql "$FIXIT_V2_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/tabelas-principais.sql
+```
+
+O teste cobre dados válidos, limites, valores inválidos, vínculos, atribuição a
+inativos, desativação preservando atribuições, imutabilidade e exclusões
+bloqueadas. Nenhuma fixture de negócio persiste. Números sequenciais podem ter
+lacunas após testes ou transações revertidas.
+
+Para testar o bloqueio real da Data API, obtenha uma sessão Auth de teste no
+ambiente selecionado, configure o JWT em `SUPABASE_TEST_ACCESS_TOKEN` por meio
+seguro e execute:
+
+```sh
+npm run db:check-api -- local
+npm run db:check-api -- cloud
+```
+
+O comando lê apenas `.env.supabase.<ambiente>`, exige sessão válida, confirma a
+consulta técnica e verifica SELECT/INSERT/UPDATE/DELETE nas três tabelas com
+`anon` e `authenticated`. Não aceita erro de rede ou token inválido como prova
+de bloqueio. Usa IDs inexistentes e não cria conta nem dados de negócio; quem
+provisionou a conta de teste deve removê-la ao terminar. Não publique o JWT nem
+use chave privilegiada como sessão de teste. Não inclua estes testes reais no
+comando padrão `verify`, que continua reproduzível sem credenciais de banco.
