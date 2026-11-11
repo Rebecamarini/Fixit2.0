@@ -1,5 +1,6 @@
 -- Executar com ON_ERROR_STOP. Todas as fixtures são revertidas.
 begin;
+set constraints auth.criar_profile_auth immediate;
 set local statement_timeout = '20s';
 create function pg_temp.rejects(command text, expected_state text) returns void language plpgsql as $f$
 begin
@@ -16,8 +17,8 @@ declare
   cliente uuid := gen_random_uuid();
   perfil public.profiles;
 begin
-  insert into auth.users(id) values (cliente);
-  insert into public.profiles(id, nome, papel) values (cliente, 'Cliente de teste', 'cliente') returning * into perfil;
+  insert into auth.users(id,raw_user_meta_data) values (cliente, '{"nome":"Cliente de teste"}');
+  select * into perfil from public.profiles where id=cliente;
   perform pg_temp.rejects(format('insert into public.profiles(id,nome,papel) values (%L,%L,%L)', gen_random_uuid(), 'Nome', 'cliente'), '23503');
   perform pg_temp.rejects(format('update public.profiles set nome=%L where id=%L', E' \t\n', cliente), '23514');
   perform pg_temp.rejects(format('update public.profiles set nome=%L where id=%L', repeat('a',121), cliente), '23514');
@@ -33,8 +34,10 @@ declare
   cliente uuid := gen_random_uuid(); gestor uuid := gen_random_uuid(); manutentor uuid := gen_random_uuid();
   pedido public.solicitacoes; segundo public.solicitacoes; campo text; limite int; estado text;
 begin
-  insert into auth.users(id) values(cliente),(gestor),(manutentor);
-  insert into public.profiles(id,nome,papel) values(cliente,'Cliente','cliente'),(gestor,'Gestor','gestor'),(manutentor,'Manutentor','manutentor');
+  insert into auth.users(id,raw_user_meta_data,raw_app_meta_data) values
+    (cliente,'{"nome":"Cliente"}','{}'),
+    (gestor,'{"nome":"Gestor"}','{"fixit_papel":"gestor"}'),
+    (manutentor,'{"nome":"Manutentor"}','{"fixit_papel":"manutentor"}');
   insert into public.solicitacoes(solicitante_id,titulo,descricao,local) values(cliente,'Título','Descrição','Sala') returning * into pedido;
   insert into public.solicitacoes(solicitante_id,titulo,descricao,local) values(cliente,repeat('a',150),repeat('a',5000),repeat('a',200)) returning * into segundo;
   assert pedido.id is not null and pedido.numero <> segundo.numero and pedido.created_at is not null;
@@ -71,8 +74,9 @@ end $$;
 do $$
 declare cliente uuid:=gen_random_uuid(); manutentor uuid:=gen_random_uuid(); pedido uuid; evento uuid;
 begin
-  insert into auth.users(id) values(cliente),(manutentor);
-  insert into public.profiles(id,nome,papel) values(cliente,'Cliente','cliente'),(manutentor,'Manutentor','manutentor');
+  insert into auth.users(id,raw_user_meta_data,raw_app_meta_data) values
+    (cliente,'{"nome":"Cliente"}','{}'),
+    (manutentor,'{"nome":"Manutentor"}','{"fixit_papel":"manutentor"}');
   insert into public.solicitacoes(solicitante_id,titulo,descricao,local) values(cliente,'t','d','l') returning id into pedido;
   insert into public.historico(solicitacao_id,autor_id,tipo) values(pedido,cliente,'abertura') returning id into evento;
   insert into public.historico(solicitacao_id,autor_id,tipo,status_anterior,status_novo) values(pedido,cliente,'alteracao_status','pendente','aprovada');

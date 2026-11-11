@@ -141,3 +141,93 @@ o bloqueio. Usa IDs inexistentes e não cria conta nem dados de negócio; quem
 provisionou a conta de teste deve removê-la ao terminar. Não publique o JWT nem
 use chave privilegiada como sessão de teste. Não inclua estes testes reais no
 comando padrão `verify`, que continua reproduzível sem credenciais de banco.
+
+## Autenticação — MVP-01
+
+Contrato e critérios: [spec de autenticação](docs/specs/mvp-01-autenticacao.md).
+A integração não inclui telas. Use `createAuth(client)` com o cliente browser
+ou com `await createServerSupabaseClient()` no servidor. A interface oferece:
+
+- `signUp({ nome, email, password })`: cadastro exclusivo como Cliente ativo;
+- `signIn({ email, password })`: login dos três papéis;
+- `context()`: identidade validada pelo Auth e perfil atual;
+- `signOut()`: logout da sessão atual, preservando outros dispositivos.
+
+Cadastro/login/contexto retornam `{ ok: true, user, profile }` ou
+`{ ok: false, error }`. Os estados de erro são `invalid_input`,
+`invalid_credentials`, `not_authenticated`, `profile_missing`,
+`profile_inactive`, `profile_creation_failed`, `signup_failed` e `unavailable`.
+Logout retorna `{ ok: true }` ou falha. Nenhuma resposta inclui senha ou segredo.
+A falha `unavailable` inclui indisponibilidade e limitação temporária do provedor.
+
+O cliente browser usa cookies persistentes compartilhados entre abas. O proxy
+renova a sessão antes da renderização, propaga cookies e impede cache de respostas
+com sessão. O cliente servidor usa os cookies da requisição: mutações devem
+ocorrer em Server Actions ou Route Handlers, onde é possível gravar cookies.
+Respostas autenticadas de handlers próprios também devem usar
+`Cache-Control: private, no-store`. Não autorize ações com `getSession()` ou
+metadados públicos; consulte o perfil e as políticas específicas do MVP-02.
+Logout não promete invalidar instantaneamente JWTs emitidos; as outras abas
+compartilham a remoção dos cookies e perdem a sessão na próxima operação.
+
+O trigger de Auth cria o perfil na mesma transação da conta; falha de perfil
+reverte o cadastro. A execução é adiada até o fim da transação porque a API
+administrativa aplica os metadados de papel depois da inserção inicial. O nome
+vem de `user_metadata.nome`; o papel só vem de `app_metadata.fixit_papel`,
+controlado administrativamente, com padrão Cliente. Metadados editáveis pela
+pessoa não definem papel ou atividade. O único acesso novo na Data API é SELECT
+do próprio perfil; escritas e as demais tabelas continuam fechadas.
+
+O cadastro entra imediatamente: configure confirmação de e-mail desabilitada
+no Auth de cada ambiente, além de aplicar a migration. No local isso fica
+versionado na configuração de Auth. A senha é validada pelo provedor conforme
+a configuração efetiva, sem regra adicional de complexidade no frontend.
+O mínimo observado nos ambientes v2 é seis caracteres; alterações nessa política
+precisam manter a integração e mensagens consistentes. Proteção contra senha
+vazada depende do plano disponível e não é simulada pelo aplicativo.
+
+### Provisionar Gestor ou Manutentor
+
+Operador autorizado usa `auth:provision`, sem disponibilizar esse comando em
+rota pública. Configure `SUPABASE_AUTH_ADMIN_KEY` no processo por um gerenciador
+de segredos. Nunca use variável `NEXT_PUBLIC_` para esse valor. Forneça um JSON
+privado via stdin com `nome`, `email`, `password` e `papel` (`gestor` ou
+`manutentor`), por exemplo:
+
+```sh
+npm run auth:provision -- local < /caminho/privado/conta.json
+npm run auth:provision -- cloud < /caminho/privado/conta.json
+```
+
+O comando lê apenas `.env.supabase.<ambiente>`, cria a conta e o perfil com o
+papel definitivo e informa somente o identificador. Não promove Cliente existente,
+não envia convite e não imprime senha. Combine com a pessoa um canal privado de
+entrega antes de criar acesso real, exclua o arquivo privado após o uso e remova
+a chave administrativa do processo. Desativação preserva os vínculos; não exclua
+contas de produto para contornar a imutabilidade de papéis.
+
+### Integração real
+
+```sh
+npm run auth:check -- local
+npm run auth:check -- cloud
+```
+
+Além da configuração pública do ambiente, o executor exige
+`SUPABASE_AUTH_ADMIN_KEY` e `FIXIT_AUTH_SQL_COMMAND`: comando técnico confiável
+que recebe SQL por stdin e retorna apenas um array JSON com as linhas (ou `[]`
+para comandos sem resultado). O helper precisa de acesso administrativo ao banco
+do mesmo ambiente. Esses valores são exclusivos da preparação/limpeza de testes;
+não fazem parte da integração de produto. Não execute helpers recebidos de fontes
+não confiáveis e não inclua credenciais na linha de comando ou no histórico.
+
+A suite verifica cadastro, atomicidade por falha real de perfil, privilégios,
+login dos três papéis, cookies persistentes, renovação, logout local, outro
+dispositivo, sessão revogada, perfil ausente/inativo e isolamento das tabelas.
+Usa contas temporárias com prefixo `fixit-auth-` e variações de cenário, revoga
+sessões e remove perfis e contas no `finally`; qualquer falha de limpeza termina
+com erro. Não está no `verify`, que roda sem credenciais de banco.
+O teste SQL das tabelas usa agora metadados Auth nas fixtures e antecipa o trigger
+diferível dentro da transação de teste para verificar integridade antes do rollback.
+A verificação `db:check-api` permite somente a leitura do próprio perfil para a
+identidade autenticada, preservando os bloqueios de escrita e das outras tabelas.
