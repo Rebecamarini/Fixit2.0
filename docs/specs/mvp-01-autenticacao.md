@@ -1,7 +1,7 @@
 # MVP-01 — Autenticação e associação do perfil
 
 Cartão: https://trello.com/c/FfU6Vsm9
-Status: especificada em 2026-11-11 por solicitação via to-spec. Implementação não iniciada nem autorizada por esta publicação.
+Status: implementada e validada em 2026-11-11 na branch `integration/mvp-01-autenticacao`, após pedido claro e separado via implement-spec. Evidências em [mvp-01-autenticacao-validation.md](mvp-01-autenticacao-validation.md).
 Prioridade: Obrigatória.
 
 ## Problem Statement
