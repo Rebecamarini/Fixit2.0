@@ -29,12 +29,12 @@ try {
           : { id, solicitacao_id: randomUUID(), autor_id: randomUUID(), tipo: "abertura" };
       const read = await client.from(table).select("id").limit(1).abortSignal(AbortSignal.timeout(10_000));
       const denied = (error) => ["42501", "PGRST205"].includes(error?.code);
-      assert(denied(read.error) || (!read.error && read.data.length === 0), `${table}: leitura exposta ou falha inesperada.`);
+      assert(denied(read.error), `${table}: leitura exposta ou falha inesperada.`);
       const insert = await client.from(table).insert(payload).abortSignal(AbortSignal.timeout(10_000));
       assert(denied(insert.error), `${table}: INSERT não foi bloqueado por permissão.`);
       for (const operation of [client.from(table).update(payload).eq("id", id).select("id"), client.from(table).delete().eq("id", id).select("id")]) {
         const result = await operation.abortSignal(AbortSignal.timeout(10_000));
-        assert(denied(result.error) || (!result.error && result.data.length === 0), `${table}: alteração exposta ou falha inesperada.`);
+        assert(denied(result.error), `${table}: alteração exposta ou falha inesperada.`);
       }
       checks += 4;
     }
