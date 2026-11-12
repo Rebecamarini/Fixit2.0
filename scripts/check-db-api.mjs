@@ -29,8 +29,8 @@ try {
           : { id, solicitacao_id: randomUUID(), autor_id: randomUUID(), tipo: "abertura" };
       const read = await client.from(table).select("id").limit(1).abortSignal(AbortSignal.timeout(10_000));
       const denied = (error) => ["42501", "PGRST205"].includes(error?.code);
-      if (table === "profiles" && client === authenticated) {
-        assert(!read.error && read.data.every(row => row.id === identity.data.user.id), "profiles: leitura deve conter somente a própria identidade.");
+      if (client === authenticated) {
+        assert(!read.error, `${table}: consulta autenticada deve ser processada por RLS; valide a matriz com rls:check.`);
       } else {
         assert(denied(read.error), `${table}: leitura exposta ou falha inesperada.`);
       }
