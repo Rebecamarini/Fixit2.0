@@ -1,7 +1,7 @@
 # MVP-02 — Permissões com RLS
 
 Cartão: https://trello.com/c/aTmY7Xk2
-Status: consolidada pelo usuário em 2026-11-12; pronta para implementação mediante pedido separado.
+Status: implementada e validada em 2026-11-12 na branch `integration/mvp-02-rls`, após pedido claro e separado via implement-spec. Evidências em [mvp-02-rls-validation.md](mvp-02-rls-validation.md).
 Prioridade: Obrigatória.
 
 ## Problem Statement
