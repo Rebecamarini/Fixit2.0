@@ -46,3 +46,7 @@ Spec versionada em `def91f9`; testes e evidências em `ed93cfe`; merge sem confl
 `npm run verify` na raiz da integração aprovado: 11 testes, lint sem avisos, tipos e build. A primeira tentativa no sandbox falhou em dois testes ao abrir servidor local (`listen EPERM`); a execução autorizada fora do sandbox passou integralmente. `git diff --check` aprovado.
 
 Revisões independentes sobre `git diff main...e459c36`: Standards — zero achados; Spec — zero achados acionáveis. Não houve correção posterior de produto. A entrega permanece local nesta branch, sem push ou PR nesta execução.
+
+## Reconferência antes do PR — 2026-11-12
+
+Após autorização do usuário para publicar e mergear, `origin/main` foi atualizado e continua ancestral da integração. Nova execução de `npm run verify` aprovada (11 testes, lint, tipos e build); nova execução de `rls:check local` aprovada com 245 verificações e limpeza conferida. A variação de uma verificação decorre da corrida documentada acima. A execução cloud de 245 verificações registrada nesta entrega permanece válida para o mesmo código de testes e banco; não foi repetida nesta reconferência. Diff sem erros de whitespace. Repositório sem workflows GitHub Actions; não há resultado de CI remoto a declarar.
