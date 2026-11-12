@@ -107,12 +107,12 @@ try {
   check((await reopened.auth.context()).error === 'not_authenticated' && reopened.jar.size === 0, 'Logout remove cookies e acesso local.');
   check((await second.auth.context()).ok && !(await second.client.auth.refreshSession()).error, 'Outro dispositivo preserva acesso e renovação.');
   await sql(`update public.profiles set ativo=false where id='${signup.user.id}'`);
-  check((await second.auth.context()).error === 'profile_inactive', 'Perfil inativo não produz acesso pronto.');
+  check((await second.auth.context()).error === 'profile_missing', 'RLS oculta perfil inativo e impede acesso pronto.');
   await sql(`delete from public.profiles where id='${signup.user.id}'`);
   check((await second.auth.context()).error === 'profile_missing', 'Perfil ausente é distinguido.');
   for (const table of ['solicitacoes','historico']) {
     const result = await second.client.from(table).select('id');
-    check(['42501','PGRST205'].includes(result.error?.code), 'Demais tabelas continuam fechadas.');
+    check(!result.error && result.data.length === 0, 'Perfil ausente não lê solicitações nem histórico.');
   }
   const session = await second.client.auth.getSession();
   await admin.auth.admin.signOut(session.data.session.access_token,'global');
