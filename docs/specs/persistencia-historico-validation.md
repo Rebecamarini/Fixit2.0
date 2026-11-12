@@ -39,4 +39,10 @@ A primeira tentativa local dentro do sandbox não acessou Docker e terminou ante
 
 Histórico obrigatório cobre operações da aplicação. Manutenção administrativa direta continua fora da geração automática de eventos, conforme a decisão da spec. Não foram criadas telas, não houve nova migration e não foi alterado o cartão separado de revisão de integração e segurança. Corridas exercitadas são evidência de comportamento, não prova formal de todos os escalonamentos possíveis. A conferência de datas permite até 60 segundos de diferença entre relógios do executor e banco.
 
-Verificações gerais e revisão final da branch de integração serão registradas ao concluir a integração.
+## Integração e revisão final
+
+Spec versionada em `def91f9`; testes e evidências em `ed93cfe`; merge sem conflitos em `e459c36`, na branch `integration/persistencia-historico`.
+
+`npm run verify` na raiz da integração aprovado: 11 testes, lint sem avisos, tipos e build. A primeira tentativa no sandbox falhou em dois testes ao abrir servidor local (`listen EPERM`); a execução autorizada fora do sandbox passou integralmente. `git diff --check` aprovado.
+
+Revisões independentes sobre `git diff main...e459c36`: Standards — zero achados; Spec — zero achados acionáveis. Não houve correção posterior de produto. A entrega permanece local nesta branch, sem push ou PR nesta execução.
