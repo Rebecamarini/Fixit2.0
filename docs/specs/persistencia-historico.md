@@ -2,7 +2,7 @@
 
 Cartão: https://trello.com/c/5rZFakvy
 
-Status: spec consolidada e aprovada em 2026-11-12; não autoriza implementação.
+Status: implementação autorizada separadamente via `implement-spec` em 2026-11-12; validação e fechamento de lacunas documentados em [persistencia-historico-validation.md](persistencia-historico-validation.md).
 
 ## Problem Statement
 
@@ -62,3 +62,5 @@ Novas telas, auditoria de manutenção administrativa, novas regras de negócio,
 ## Further Notes
 
 Síntese confirmada pelo usuário em 2026-11-12, com pedido de consolidação da spec. Aguardar pedido claro e separado para executar a validação e eventuais correções. Nenhum código ou banco foi alterado nesta entrevista.
+
+O pedido separado via `implement-spec` foi recebido após o encerramento da entrevista. As evidências da execução ficam no relatório vinculado acima; a nota anterior descreve somente o momento da especificação.

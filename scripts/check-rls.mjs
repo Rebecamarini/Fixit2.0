@@ -80,6 +80,8 @@ try {
   check((await rows(manutentor.client, 'solicitacoes', opened.id)).length === 0, 'Manutentor sem atribuição não vê solicitação.');
   const initial = await history(cliente.client, opened.id);
   check(initial.length === 1 && initial[0].tipo === 'abertura' && initial[0].autor_id === cliente.id, 'Abertura e autor são gravados automaticamente.');
+  await denied(gestor.client.rpc('transicionar_solicitacao', { p_id: opened.id, p_status: 'invalido' }), 'Status fora do domínio é recusado', ['22P02']);
+  check((await rows(cliente.client, 'solicitacoes', opened.id))[0].status === 'pendente' && (await history(cliente.client, opened.id)).length === 1, 'Status inválido não altera solicitação nem histórico.');
   check((await history(outro.client, opened.id)).length === 0, 'Histórico de outra pessoa não é exposto.');
   check((await rows(cliente.client, 'profiles', outro.id)).length === 0, 'Não há diretório geral de pessoas.');
   check((await rows(gestor.client, 'profiles', manutentor.id)).length === 1, 'Gestor lista Manutentor ativo ainda sem atribuição.');
@@ -140,6 +142,26 @@ try {
   check(completeHistory.some(event => event.id === note.id), 'Novo responsável vê observações anteriores.');
   check((await rows(substituto.client, 'profiles', manutentor.id)).length === 1, 'Novo responsável identifica autor e responsável histórico.');
   await ok(substituto.client.rpc('transicionar_solicitacao', { p_id: opened.id, p_status: 'concluida' }), 'Novo responsável conclui atendimento');
+  const finalHistory = await history(cliente.client, opened.id);
+  const payloadFields = ['tipo', 'autor_id', 'status_anterior', 'status_novo', 'prioridade_anterior', 'prioridade_nova', 'responsavel_anterior', 'responsavel_novo', 'observacao'];
+  const expectedEvents = [
+    { tipo: 'abertura', autor_id: cliente.id },
+    { tipo: 'alteracao_status', autor_id: gestor.id, status_anterior: 'pendente', status_novo: 'aprovada' },
+    { tipo: 'alteracao_prioridade', autor_id: gestor.id, prioridade_nova: 'alta' },
+    { tipo: 'alteracao_responsavel', autor_id: gestor.id, responsavel_novo: manutentor.id },
+    { tipo: 'observacao', autor_id: manutentor.id, observacao: 'Material necessário.' },
+    { tipo: 'alteracao_status', autor_id: manutentor.id, status_anterior: 'aprovada', status_novo: 'em_atendimento' },
+    { tipo: 'alteracao_prioridade', autor_id: gestor.id, prioridade_anterior: 'alta', prioridade_nova: 'media' },
+    { tipo: 'alteracao_responsavel', autor_id: gestor.id, responsavel_anterior: manutentor.id, responsavel_novo: substituto.id },
+    { tipo: 'alteracao_status', autor_id: substituto.id, status_anterior: 'em_atendimento', status_novo: 'concluida' },
+  ];
+  assert.deepEqual(finalHistory.map(event => Object.fromEntries(payloadFields.map(field => [field, event[field]]))),
+    expectedEvents.map(event => Object.fromEntries(payloadFields.map(field => [field, event[field] ?? null]))));
+  checks++;
+  check(finalHistory.every(event => event.solicitacao_id === opened.id && Number.isFinite(Date.parse(event.created_at)) && Date.parse(event.created_at) >= Date.parse(opened.created_at) && Date.parse(event.created_at) <= Date.now() + 60_000), 'Todos os eventos têm vínculo e data atuais gerados pelo banco.');
+  await denied(gestor.client.from('historico').update({ observacao: 'Reescrita' }).eq('id', note.id), 'Evento existente não pode ser editado');
+  await denied(gestor.client.from('historico').delete().eq('id', note.id), 'Evento existente não pode ser apagado');
+  check((await history(cliente.client, opened.id)).find(event => event.id === note.id)?.observacao === 'Material necessário.', 'Tentativas de reescrita preservam a observação original.');
   for (const identity of [gestor.client, substituto.client]) {
     await denied(identity.rpc('adicionar_observacao', { p_id: opened.id, p_observacao: 'Tardia' }), 'Concluída não aceita observação');
     await denied(identity.rpc('transicionar_solicitacao', { p_id: opened.id, p_status: 'aprovada' }), 'Não há reabertura');
@@ -202,6 +224,20 @@ try {
   check(rolledBack.status === 'pendente' && (await history(cliente.client, rollbackRequest.id)).length === 1, 'Estado e histórico preservados após rollback.');
   check((await history(cliente.client, incomplete.id)).length === beforeFailure.length, 'Falha isolada não altera outro histórico.');
   await sql(`alter table public.historico drop constraint ${constraint}`);
+  constraints.pop();
+
+  // Failure of the second event must also roll back the first event and both
+  // organization fields, rather than leaving a partially audited operation.
+  const organizationConstraint = `rls_fixture_${randomUUID().replaceAll('-', '')}`;
+  constraints.push(organizationConstraint);
+  await sql(`alter table public.historico add constraint ${organizationConstraint} check (not (solicitacao_id='${incomplete.id}' and tipo='alteracao_responsavel')) not valid`);
+  const beforeOrganizationFailure = await history(cliente.client, incomplete.id);
+  await denied(gestor.client.rpc('organizar_solicitacao', { p_id: incomplete.id, p_prioridade: 'alta', p_responsavel_id: manutentor.id }), 'Falha do segundo evento desfaz organização inteira', ['23514']);
+  const [unchangedOrganization] = await rows(cliente.client, 'solicitacoes', incomplete.id);
+  check(unchangedOrganization.prioridade === null && unchangedOrganization.responsavel_id === null, 'Ambos os campos preservados após falha do segundo evento.');
+  assert.deepEqual(await history(cliente.client, incomplete.id), beforeOrganizationFailure);
+  checks++;
+  await sql(`alter table public.historico drop constraint ${organizationConstraint}`);
   constraints.pop();
 
   await ok(gestor.client.rpc('organizar_solicitacao', { p_id: incomplete.id, p_prioridade: 'alta', p_responsavel_id: manutentor.id }), 'Atribuição para testar inativação');
