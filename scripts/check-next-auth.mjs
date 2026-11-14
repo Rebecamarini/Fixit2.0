@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { cp, mkdtemp, mkdir, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, realpath, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { parseEnv } from 'node:util';
 import { getSupabaseConfig } from '../src/lib/supabase/config.ts';
+import { cleanupNextAuth } from './next-auth-cleanup.mjs';
 
 // Test pages/routes live in a disposable app, never in the product build.
 // Playwright is an operator-supplied test tool, not a runtime dependency.
@@ -180,14 +181,8 @@ export default async function Page() {
   console.error(error instanceof assert.AssertionError ? error.message : 'Falha na verificação Next.js; confira ferramentas, ambiente e conectividade.');
   process.exitCode = 1;
 } finally {
-  await browser?.close();
-  if (server && server.exitCode === null) {
-    server.kill('SIGTERM');
-    await new Promise(resolve => server.once('exit', resolve));
-  }
-  if (directory) await rm(directory, { recursive: true, force: true });
-  if (process.env.FIXIT_AUTH_SQL_COMMAND) {
-    try {
+  const failures = await cleanupNextAuth({ browser, server, directory, cleanupFixtures: async () => {
+    if (process.env.FIXIT_AUTH_SQL_COMMAND) {
       const users = await sql(`select id from auth.users where email='${email}'`);
       const ids = users.map(user => `'${user.id}'`).join(',') || 'null';
       await sql(`begin;
@@ -201,10 +196,13 @@ export default async function Page() {
         (select count(*) from auth.refresh_tokens where user_id in (${ids}))::int as refresh_tokens,
         (select count(*) from public.profiles where id in (${ids}))::int as profiles`);
       assert(Object.values(remaining).every(value => value === 0));
-      console.log(`${environment}: fixtures Next.js removidas e app temporário excluído.`);
-    } catch {
-      console.error('Limpeza incompleta das fixtures Next.js; revisar antes de prosseguir.');
-      process.exitCode = 1;
+      console.log(`${environment}: fixtures Next.js removidas e conferidas.`);
     }
+  } });
+  if (failures.length) {
+    console.error(`Limpeza Next.js incompleta (${failures.join(', ')}); revisar antes de prosseguir.`);
+    process.exitCode = 1;
+  } else if (directory) {
+    console.log(`${environment}: app Next.js temporário excluído.`);
   }
 }
