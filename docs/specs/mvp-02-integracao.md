@@ -32,6 +32,14 @@ O relato (título, descrição, local), solicitante, identificadores e datas nã
 
 Abertura e mudanças de estado/prioridade/responsável geram seus eventos dentro da mesma transação da operação. Alteração de dois campos gera dois eventos, ambos com autor e valores anteriores/novos. Organização sem diferença não gera eventos. Autor e datas vêm do banco, sem parâmetros editáveis; timestamps são obtidos após os locks, preservando a ordem real das operações concorrentes. Observações e eventos existentes não podem ser editados ou apagados.
 
+As datas dos eventos são estritamente crescentes dentro de cada solicitação,
+inclusive se o relógio do banco recuar ou produzir horários iguais. O banco usa
+o horário atual, limitado inferiormente à criação da solicitação e ao último
+evento acrescido de um microssegundo, sob o lock já usado pela operação. Em
+caso de ajuste do relógio, isso preserva a ordem lógica; a data pode ficar à
+frente do relógio até ele alcançar o último evento. Não há ordenação global
+prometida entre solicitações nem alteração retroativa de eventos existentes.
+
 - `42501`: acesso/ação não autorizados, inclusive perfil inativo/ausente, solicitação inacessível ou ação incompatível com o estado. Reconsultar o estado e apresentar mensagem de ação indisponível.
 - `23514`: entrada ou combinação de campos viola o contrato (limites, texto vazio, responsável inválido/inativo ou ausência de prioridade/responsável exigidos).
 - `23502`: campo obrigatório nulo; `22P02`: enum/UUID inválido. Corrigir os parâmetros.

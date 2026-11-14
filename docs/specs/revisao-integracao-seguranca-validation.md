@@ -6,9 +6,16 @@ Execução autorizada separadamente em 2026-11-13 via `implement-spec`, na branc
 
 ## Resultado e alterações
 
-O contrato existente fornece as operações obrigatórias para os dois frontends do MVP. A revisão acrescenta evidências de sessão no Next.js real e de consultas com filtros/paginação, e corrige orientações desatualizadas do README. Nenhuma alteração de regra, migration, RPC ou tela foi necessária.
+O contrato existente fornece as operações obrigatórias para os dois frontends do MVP. A revisão acrescenta evidências de sessão no Next.js real e de consultas com filtros/paginação, corrige orientações desatualizadas do README e corrige a ordenação do histórico quando o relógio do banco recua. Não houve mudança de regra de negócio ou criação de tela.
 
 O novo `auth:check-next` cria um app temporário fora do produto, copia os módulos reais de `src/lib`, o proxy e a configuração Next.js, e executa build de produção e servidor em loopback com navegador Chromium real. Os handlers e páginas de teste são removidos ao terminar e nunca integram as rotas do produto. A ferramenta Playwright é fornecida pelo operador por caminho explícito; não há nova dependência de runtime.
+
+### Correções demonstradas pela revisão
+
+1. **Ordem do histórico:** a migration `20261114001621_monotonic_history_dates.sql` acrescenta um helper privado sem EXECUTE para os papéis da aplicação. As quatro implementações internas de RPC passam a gerar datas pelo maior valor entre relógio atual, criação da solicitação e último evento acrescido de um microssegundo. O lock existente por solicitação serializa esse cálculo. Preserva assinaturas, autorização, atomicidade e eventos anteriores; não altera dados existentes. Não há ordem global entre solicitações. Em caso de relógio recuado, a data lógica pode ficar à frente do horário de parede até ele alcançar o último evento. [`clock_timestamp()` retorna o relógio atual](https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT), e não substitui essa garantia de sequência.
+2. **Limpeza do runner Next:** uma falha ao fechar o navegador, terminar o servidor ou excluir o app podia impedir a limpeza SQL. As etapas locais agora têm falhas isoladas e espera limitada; a limpeza SQL é sempre tentada e falhas retornam saída não zero sem detalhes sensíveis. Três testes com falhas induzidas comprovam esse caminho.
+
+A regressão determinística posiciona somente o evento inicial de uma fixture uma hora à frente do relógio, por preparação SQL privilegiada e isolada; as alterações seguintes passam pelas RPCs públicas. Antes da correção, a asserção de ordem falhou e a limpeza passou; depois, a mesma asserção passou, com datas distintas em ordem estrita. O teste continua em `rls:check`. A investigação original também foi repetida após a correção: **100 sequências completas, nove eventos em cada uma, com snapshots após cada operação, todas aprovadas**, sem modificar o relógio do sistema ou enfraquecer a comparação do histórico.
 
 ## Matriz de operações e evidências
 
@@ -39,7 +46,7 @@ Os cartões de formulário/lista do Cliente ainda mencionam categoria. A decisã
 
 ## Revisão de migrations, código e estado efetivo
 
-Local e cloud possuem as quatro versões `20261110224700`, `20261111201148`, `20261111231601` e `20261112203635`. Leitura dos catálogos confirmou:
+Local e cloud possuem as cinco versões `20261110224700`, `20261111201148`, `20261111231601`, `20261112203635` e `20261114001621`. A última foi aplicada pelo conector no cloud; o arquivo criado pelo CLI foi renomeado para essa versão efetivamente registrada e aplicado pelo CLI local após reverter a iteração de teste. Leitura dos catálogos confirmou:
 
 - As três tabelas públicas têm RLS habilitada; `anon` não tem SELECT e `authenticated` tem SELECT, sem INSERT/UPDATE/DELETE/TRUNCATE direto.
 - As três políticas de leitura são para `authenticated` e consultam os helpers de visibilidade próprios. Não há política pública permissiva de escrita.
@@ -52,7 +59,7 @@ As definições efetivas foram comparadas por agregação ordenada de `pg_get_fu
 
 | Grupo | MD5 da definição agregada |
 | --- | --- |
-| Funções | `a02488e415c7168133c9af219f3dd43c` |
+| Funções | `3e449a3f17daf518ac222a2b4b533664` |
 | Políticas | `7cef1a9cafd32f4f3830fc1465eff806` |
 | Constraints | `ff4b4dd81b7d758b6fa5f9abf48c027a` |
 | Triggers | `b68dcca09000fab2daf9fcf316698c3e` |
@@ -66,6 +73,7 @@ Isso detecta divergência entre esses objetos, não substitui testes de comporta
 - `auth:check local` e `auth:check cloud`: **32 verificações por ambiente**, com limpeza confirmada.
 - `auth:check-next local` e `auth:check-next cloud`: **25 verificações por ambiente**, app temporário removido e fixtures conferidas.
 - `rls:check local` e `rls:check cloud`: **277 verificações por ambiente** na cobertura ampliada inicial, limpeza confirmada. A versão final inclui também paginação descendente (mais recentes primeiro): **285 verificações locais** e **287 cloud** aprovadas, com limpeza. A variação decorre da ordem válida das operações concorrentes, que pode exigir um início posterior pelo novo responsável.
+- Após a correção do relógio e inclusão da regressão: **295 verificações RLS locais** aprovadas, limpeza confirmada; o resultado cloud posterior à migration é registrado na revisão final abaixo. Os números anteriores representam execuções anteriores à correção.
 - Suite `supabase/tests/tabelas-principais.sql` local com `ON_ERROR_STOP=1`: aprovada, encerrada por `ROLLBACK`.
 
 Executar os comandos com Node 24.18.0/npm 11.16.0 e os arquivos ignorados `.env.supabase.local`/`.env.supabase.cloud`. Ver o README para `FIXIT_AUTH_SQL_COMMAND`, chave administrativa restrita ao runner Auth e caminhos de Playwright/navegador para o runner Next. Nenhuma credencial pertence a este relatório. O bridge SQL cloud é mecanismo temporário de preparação/limpeza pelo conector, não endpoint do aplicativo.
@@ -75,10 +83,14 @@ Executar os comandos com Node 24.18.0/npm 11.16.0 e os arquivos ignorados `.env.
 - A reabertura é comprovada por novo contexto Chromium restaurando cookies persistidos; não depende de manter o cliente em memória. A renovação antecipa o vencimento armazenado no cookie, preservando JWT assinado/refresh token real; não espera uma hora de expiração natural. Revogação definitiva é testada antes da tentativa de renovação.
 - Logout local remove cookies e a capacidade de renovação da sessão atual; não promete invalidar instantaneamente todos os JWTs já emitidos. Outro dispositivo permanece autenticado conforme o contrato.
 - O serviço de agentes reiniciou durante testes cloud. Os processos terminaram e a ausência de fixtures foi conferida; como o stdout foi perdido, RLS e Next cloud foram executados novamente com logs privados em arquivo. Os números apresentados acima vêm das execuções novas com resultado disponível.
-- Uma tentativa local do executor RLS falhou na comparação da ordem do histórico antes dos novos testes de consulta. O diagnóstico detalhado se perdeu no reinício; a execução seguinte passou sem alterar código de produto nem enfraquecer a asserção. Não atribuir causa ao relógio ou ao banco sem evidência. A ocorrência não foi reproduzida na execução registrada; permanece uma limitação diagnóstica desta revisão.
+- Uma tentativa local do executor RLS falhou na comparação da ordem do histórico antes dos novos testes de consulta. O diagnóstico inicial se perdeu no reinício. A revisão independente exigiu investigação direcionada: um probe de RPCs sequenciais com snapshots por operação reproduziu a falha na 22ª sequência. A observação foi persistida em `2026-11-14T00:13:04.433441Z`, mas o início do atendimento seguinte veio com `2026-11-14T00:13:04.301025Z`, antes até da abertura em `.415684Z`. O tempo monotônico do executor avançou e o payload/autoria correspondeu às chamadas. Isso distingue recuo do relógio do banco de empate de timestamps, expectativa incorreta ou evento de outra fixture. A correção e a regressão estão descritas acima; não se atribuiu a causa ao relógio antes dessa reprodução.
 - O primeiro `verify` no worktree usou symlink de `node_modules` externo, e Turbopack recusou a resolução fora da raiz. Esse arranjo de teste foi substituído por instalação própria, sem alterar configuração do produto.
 - Não foram implementadas nem aceitas as telas finais. Não há declaração de prova formal de segurança ou de todos os escalonamentos concorrentes possíveis.
 
 ## Revisão final
 
-Resultados da integração, revisão independente e limpeza final serão registrados após concluir os checks.
+Primeira revisão independente: Standards — um P2 na limpeza do runner; Spec — um P2 na ordenação do histórico sem diagnóstico. Ambos foram tratados no commit `78283bb`, integrado sem conflitos em `b04adec`: falhas locais não interrompem a tentativa de limpeza SQL e a ordem do histórico agora é protegida contra recuo do relógio, com regressão demonstrada.
+
+Após a migration: **295 verificações RLS em local e 295 em cloud**, **25 verificações Next.js em cada ambiente**, todas com limpeza conferida. A suite SQL local foi repetida com rollback e passou. `npm run verify` no worktree final passou com **14 testes, lint, tipos e build**; a integração repete esses checks antes do encerramento. Advisors cloud novamente sem achados. Catálogos local/cloud coincidem com os fingerprints acima. Contas temporárias e constraints de falha não restaram em nenhum ambiente; a chave administrativa temporária e seu receptor local foram removidos/encerrados.
+
+Os testes de Auth (32 por ambiente) foram executados nesta entrega sobre os mesmos módulos de autenticação, que não foram alterados pela correção de datas. A suite RLS posterior à migration entra novamente pelo Auth público real; as duas suites de sessão também foram repetidas após a correção do runner.
