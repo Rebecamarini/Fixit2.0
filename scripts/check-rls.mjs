@@ -159,6 +159,23 @@ try {
     expectedEvents.map(event => Object.fromEntries(payloadFields.map(field => [field, event[field] ?? null]))));
   checks++;
   check(finalHistory.every(event => event.solicitacao_id === opened.id && Number.isFinite(Date.parse(event.created_at)) && Date.parse(event.created_at) >= Date.parse(opened.created_at) && Date.parse(event.created_at) <= Date.now() + 60_000), 'Todos os eventos têm vínculo e data atuais gerados pelo banco.');
+
+  // A clock that moves backwards must not reorder this request's history.
+  // Privileged setup moves only this fixture's previous event into the future;
+  // the changes under test still use the same public RPCs as the frontends.
+  const skewed = await ok(cliente.client.rpc('abrir_solicitacao', { p_titulo: 'Relógio', p_descricao: 'd', p_local: 'l' }), 'Preparar regressão de relógio');
+  const [skewedOpening] = await history(cliente.client, skewed.id);
+  await sql(`begin; set local session_replication_role=replica;
+    update public.historico set created_at=clock_timestamp()+interval '1 hour' where id='${skewedOpening.id}';
+    set local session_replication_role=origin; commit;`);
+  const [futureOpening] = await history(cliente.client, skewed.id);
+  await ok(gestor.client.rpc('transicionar_solicitacao', { p_id: skewed.id, p_status: 'aprovada' }), 'Transição após recuo do relógio');
+  await ok(gestor.client.rpc('organizar_solicitacao', { p_id: skewed.id, p_prioridade: 'alta', p_responsavel_id: manutentor.id }), 'Organização após recuo do relógio');
+  const skewedHistory = await history(cliente.client, skewed.id);
+  assert.deepEqual(skewedHistory.map(event => event.tipo), ['abertura', 'alteracao_status', 'alteracao_prioridade', 'alteracao_responsavel']);
+  checks++;
+  check(skewedHistory[0].id === skewedOpening.id && new Set(skewedHistory.map(event => event.created_at)).size === 4, 'Eventos preservam ordem estrita mesmo com relógio anterior ao último evento.');
+  check(skewedHistory.slice(1).every(event => event.created_at > futureOpening.created_at), 'Novas datas UTC são posteriores à referência futura, preservando microssegundos.');
   await denied(gestor.client.from('historico').update({ observacao: 'Reescrita' }).eq('id', note.id), 'Evento existente não pode ser editado');
   await denied(gestor.client.from('historico').delete().eq('id', note.id), 'Evento existente não pode ser apagado');
   check((await history(cliente.client, opened.id)).find(event => event.id === note.id)?.observacao === 'Material necessário.', 'Tentativas de reescrita preservam a observação original.');
@@ -177,6 +194,35 @@ try {
   await ok(gestor.client.rpc('organizar_solicitacao', { p_id: incomplete.id, p_prioridade: null, p_responsavel_id: manutentor.id }), 'Aprovada admite prioridade vazia');
   await denied(manutentor.client.rpc('transicionar_solicitacao', { p_id: incomplete.id, p_status: 'em_atendimento' }), 'Não inicia sem prioridade', ['23514']);
   await ok(gestor.client.rpc('organizar_solicitacao', { p_id: incomplete.id, p_prioridade: null, p_responsavel_id: null }), 'Aprovada admite remoção de atribuição');
+  // Frontend list queries must preserve RLS even with filters, counts and
+  // pagination; scope to fixture IDs so existing cloud data cannot affect it.
+  const listedIds = [opened.id, pending.id, incomplete.id];
+  for (const [identity, expectedIds] of [
+    [cliente.client, listedIds], [gestor.client, listedIds], [outro.client, []],
+    [manutentor.client, []], [substituto.client, [opened.id]],
+  ]) {
+    const listing = await identity.from('solicitacoes').select('id,status', { count: 'exact' })
+      .in('id', listedIds).order('created_at').order('id').range(0, 1).abortSignal(AbortSignal.timeout(15_000));
+    check(!listing.error && listing.count === expectedIds.length, 'Contagem de listagem respeita acesso por papel.');
+    assert.deepEqual(listing.data.map(row => row.id), expectedIds.slice(0, 2));
+    checks++;
+    const nextPage = await ok(identity.from('solicitacoes').select('id').in('id', listedIds)
+      .order('created_at').order('id').range(2, 3), 'Página seguinte autorizada');
+    assert.deepEqual(nextPage.map(row => row.id), expectedIds.slice(2, 4));
+    checks++;
+    const recent = await ok(identity.from('solicitacoes').select('id').in('id', listedIds)
+      .order('created_at', { ascending: false }).order('id', { ascending: false }).range(0, 1), 'Solicitações mais recentes primeiro');
+    assert.deepEqual(recent.map(row => row.id), [...expectedIds].reverse().slice(0, 2));
+    checks++;
+    const filtered = await ok(identity.from('solicitacoes').select('id').in('id', listedIds)
+      .eq('status', 'aprovada').order('created_at').order('id'), 'Filtro de status autorizado');
+    assert.deepEqual(filtered.map(row => row.id), expectedIds.filter(id => id === incomplete.id));
+    checks++;
+  }
+  const activeMaintainers = await ok(gestor.client.from('profiles').select('id').in('id', fixtures.map(row => row.id))
+    .eq('papel', 'manutentor').eq('ativo', true).order('id'), 'Seleção de Manutentores ativos');
+  assert.deepEqual(activeMaintainers.map(row => row.id), [manutentor.id, substituto.id].sort());
+  checks++;
   for (const identity of [cliente.client, gestor.client, manutentor.client]) {
     await denied(identity.rpc('transicionar_solicitacao', { p_id: randomUUID(), p_status: 'aprovada' }), 'ID inexistente não concede operação');
   }

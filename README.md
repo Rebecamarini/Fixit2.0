@@ -85,7 +85,7 @@ npm run dev
 
 Reinicie o servidor ao trocar o arquivo. Para produção, configure os três campos antes de `npm run build`: `NEXT_PUBLIC_` é incorporado ao JavaScript do navegador durante o build, portanto a troca exige um novo build. Evite exportar variáveis homônimas no shell, pois têm precedência sobre `.env.local` no Next.js.
 
-Clientes disponíveis: `createBrowserSupabaseClient` em `src/lib/supabase/client.ts` e `createServerSupabaseClient` em `src/lib/supabase/server.ts`. O servidor é protegido por `server-only` e cria o cliente por chamada. Ambos usam somente chave publicável e são **sem sessão** neste setup: não persistem usuário, não atualizam tokens e não processam login pela URL. Cookies, autenticação e permissões do produto pertencem aos próximos cartões.
+Clientes disponíveis: `createBrowserSupabaseClient` em `src/lib/supabase/client.ts` e `createServerSupabaseClient` em `src/lib/supabase/server.ts`. O servidor é protegido por `server-only` e cria o cliente por chamada. Ambos usam somente chave publicável, com sessão persistida em cookies e renovada pelo proxy. A integração de autenticação está descrita abaixo; consultas e alterações seguem o [contrato dos frontends](docs/specs/mvp-02-integracao.md).
 
 A página inicial funciona sem credenciais; clientes só são criados onde forem usados. Não há tela ou endpoint técnico permanente no produto.
 
@@ -97,14 +97,15 @@ npm run verify
 
 Executa testes de comportamento do comando/configuração, lint, tipos e build. Os testes usam uma API HTTP controlada e não substituem as consultas reais nos dois ambientes. A validação dos clientes no navegador e servidor deve ser registrada na evidência do cartão.
 
-Consulte a [spec do setup](docs/specs/setup-supabase.md), `CONTEXT.md`, `docs/adr/` e `docs/agents/` para escopo e convenções. As tabelas de negócio estão descritas abaixo; autenticação e políticas RLS por papel continuam nos próximos cartões do Trello.
+Consulte a [spec do setup](docs/specs/setup-supabase.md), `CONTEXT.md`, `docs/adr/` e `docs/agents/` para escopo e convenções. As tabelas, autenticação e políticas por papel já possuem implementação e verificações próprias; isso não substitui o aceite das telas ainda pendentes.
 
 ## Tabelas principais
 
 Contrato: [spec de tabelas](docs/specs/tabelas-principais.md). A migration cria
 `profiles`, `solicitacoes` e `historico`, com restrições no banco, histórico
-imutável e RLS habilitada. O acesso comum pela API permanece fechado até o
-cartão de políticas. Não há geração automática de eventos nesta entrega.
+imutável e RLS habilitada. A migration de políticas libera consultas filtradas
+por papel e quatro RPCs de escrita; INSERT/UPDATE/DELETE diretos continuam
+bloqueados. As RPCs geram os eventos na mesma transação da alteração.
 
 Aplique migrations pendentes com os comandos de local/cloud descritos acima.
 Confirme o projeto **fixit-v2** antes de qualquer aplicação cloud. A verificação
@@ -175,8 +176,8 @@ reverte o cadastro. A execução é adiada até o fim da transação porque a AP
 administrativa aplica os metadados de papel depois da inserção inicial. O nome
 vem de `user_metadata.nome`; o papel só vem de `app_metadata.fixit_papel`,
 controlado administrativamente, com padrão Cliente. Metadados editáveis pela
-pessoa não definem papel ou atividade. O único acesso novo na Data API é SELECT
-do próprio perfil; escritas e as demais tabelas continuam fechadas.
+pessoa não definem papel ou atividade. As políticas do MVP-02 permitem SELECT
+somente dos perfis e solicitações autorizados e protegem as escritas pelas RPCs.
 
 O cadastro entra imediatamente: configure confirmação de e-mail desabilitada
 no Auth de cada ambiente, além de aplicar a migration. No local isso fica
@@ -229,5 +230,30 @@ sessões e remove perfis e contas no `finally`; qualquer falha de limpeza termin
 com erro. Não está no `verify`, que roda sem credenciais de banco.
 O teste SQL das tabelas usa agora metadados Auth nas fixtures e antecipa o trigger
 diferível dentro da transação de teste para verificar integridade antes do rollback.
-A verificação `db:check-api` permite somente a leitura do próprio perfil para a
-identidade autenticada, preservando os bloqueios de escrita e das outras tabelas.
+A verificação `db:check-api` confirma que consultas autenticadas são processadas
+por RLS e que escritas diretas permanecem bloqueadas. A matriz de acesso por papel
+é exercitada por `npm run rls:check -- local` e `npm run rls:check -- cloud`.
+
+### Sessão no Next.js real
+
+```sh
+npm run auth:check-next -- local
+npm run auth:check-next -- cloud
+```
+
+Configure `FIXIT_AUTH_SQL_COMMAND` para o ambiente escolhido e
+`FIXIT_PLAYWRIGHT_MODULE` com o caminho absoluto para `playwright-core/index.mjs`
+de uma instalação de ferramenta de teste confiável. O runner não instala pacotes.
+Use Chromium instalado pelo Playwright ou indique o executável existente em
+`FIXIT_BROWSER_EXECUTABLE`. Não é necessária chave administrativa de API.
+
+O comando cria um app descartável fora do repositório, copiando os clientes e o
+proxy reais, executa `next build`/`next start` em loopback e testa cadastro,
+cookies persistentes, reabertura do contexto do navegador, integração browser/
+servidor/Server Component, renovação real pelo proxy, cache privado, logout e
+sessão revogada. Páginas e handlers de apoio nunca entram no build do produto.
+A renovação é provocada antecipando somente o vencimento armazenado no cookie;
+o JWT assinado não é alterado. A expiração definitiva é exercitada revogando a
+sessão antes da tentativa de renovação. Isso não mede o decurso natural do JWT.
+O runner remove suas contas, confere a ausência de resíduos e exclui o app no
+`finally`. Como os demais testes reais, fica fora de `verify`.

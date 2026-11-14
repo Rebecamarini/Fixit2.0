@@ -23,6 +23,7 @@
     "db:check-api": "node scripts/check-db-api.mjs",
     "rls:check": "node scripts/check-rls.mjs",
     "auth:check": "node scripts/check-auth.mjs",
+    "auth:check-next": "node scripts/check-next-auth.mjs",
     "auth:provision": "node scripts/provision-auth.mjs"
   },
   "dependencies": {

@@ -32,6 +32,14 @@ O relato (título, descrição, local), solicitante, identificadores e datas nã
 
 Abertura e mudanças de estado/prioridade/responsável geram seus eventos dentro da mesma transação da operação. Alteração de dois campos gera dois eventos, ambos com autor e valores anteriores/novos. Organização sem diferença não gera eventos. Autor e datas vêm do banco, sem parâmetros editáveis; timestamps são obtidos após os locks, preservando a ordem real das operações concorrentes. Observações e eventos existentes não podem ser editados ou apagados.
 
+As datas dos eventos são estritamente crescentes dentro de cada solicitação,
+inclusive se o relógio do banco recuar ou produzir horários iguais. O banco usa
+o horário atual, limitado inferiormente à criação da solicitação e ao último
+evento acrescido de um microssegundo, sob o lock já usado pela operação. Em
+caso de ajuste do relógio, isso preserva a ordem lógica; a data pode ficar à
+frente do relógio até ele alcançar o último evento. Não há ordenação global
+prometida entre solicitações nem alteração retroativa de eventos existentes.
+
 - `42501`: acesso/ação não autorizados, inclusive perfil inativo/ausente, solicitação inacessível ou ação incompatível com o estado. Reconsultar o estado e apresentar mensagem de ação indisponível.
 - `23514`: entrada ou combinação de campos viola o contrato (limites, texto vazio, responsável inválido/inativo ou ausência de prioridade/responsável exigidos).
 - `23502`: campo obrigatório nulo; `22P02`: enum/UUID inválido. Corrigir os parâmetros.
@@ -39,6 +47,52 @@ Abertura e mudanças de estado/prioridade/responsável geram seus eventos dentro
 - Falhas de rede/serviço devem ser tratadas separadamente. Após resposta perdida, reconsultar a solicitação antes de repetir uma ação. Observações não têm chave de idempotência; uma repetição explícita é um novo registro.
 
 Rotinas privilegiadas ficam no schema privado, com `search_path` vazio e permissões explícitas; wrappers públicos são `security invoker`. Só as operações estreitas autorizadas são acessíveis. Todas revalidam a pessoa ativa e bloqueiam a solicitação antes de alterar estado, responsabilidade ou observações; a inativação concorre com um lock compartilhado do perfil. Acesso administrativo direto continua sendo manutenção explícita, fora do contrato da aplicação e da geração de eventos dessas RPCs.
+
+## Exemplos para integrar as telas
+
+Usar `client` criado por `createBrowserSupabaseClient()` no navegador ou por
+`await createServerSupabaseClient()` no servidor. Ambos carregam a sessão atual;
+não enviar papel, solicitante, autor ou data como parâmetros de autorização.
+
+```ts
+// Cadastro/login/logout e contexto compartilham o cliente autenticado.
+const auth = createAuth(client);
+const contexto = await auth.context();
+// Sucesso: { ok: true, user: { id, email }, profile: { id, nome, papel, ativo, created_at } }
+// Sem sessão: { ok: false, error: "not_authenticated" }
+
+// Lista mais recente primeiro; RLS aplica o acesso do papel atual.
+const lista = await client.from("solicitacoes")
+  .select("id,numero,titulo,local,status,prioridade,responsavel_id,created_at", { count: "exact" })
+  .eq("status", "aprovada")
+  .order("created_at", { ascending: false }).order("id", { ascending: false })
+  .range(0, 19);
+// Sucesso: { data: [...], count: totalVisivel, error: null }; lista vazia é válida.
+
+const abertura = await client.rpc("abrir_solicitacao", {
+  p_titulo: "Lâmpada apagada", p_descricao: "Não acende ao ligar", p_local: "Sala 1",
+});
+// Sucesso: data contém a solicitação persistida em status "pendente".
+
+// Gestor usa um ID obtido da lista/detalhe autorizado.
+const aprovacao = await client.rpc("transicionar_solicitacao", {
+  p_id: solicitacaoId, p_status: "aprovada",
+});
+const organizacao = await client.rpc("organizar_solicitacao", {
+  p_id: solicitacaoId, p_prioridade: "alta", p_responsavel_id: manutentorId,
+});
+// Organizar envia sempre os dois valores desejados. Recusa: error.code "42501"
+// para ação não autorizada; "23514" para combinação inválida (ver tabela de erros).
+
+const historico = await client.from("historico").select("*")
+  .eq("solicitacao_id", solicitacaoId).order("created_at").order("id");
+// data inclui os eventos anteriores; [] também pode significar ID fora do acesso.
+```
+
+`createAuth` é importado de `src/lib/auth.ts`; os identificadores dos exemplos
+são valores do fluxo da tela. Tratar `error` antes de afirmar sucesso e consultar
+novamente após mutações para atualizar a apresentação. “Assunto” corresponde a
+`titulo`; categoria foi excluída do MVP pela spec de tabelas principais.
 
 ## Validação reproduzível
 
