@@ -40,6 +40,52 @@ Abertura e mudanças de estado/prioridade/responsável geram seus eventos dentro
 
 Rotinas privilegiadas ficam no schema privado, com `search_path` vazio e permissões explícitas; wrappers públicos são `security invoker`. Só as operações estreitas autorizadas são acessíveis. Todas revalidam a pessoa ativa e bloqueiam a solicitação antes de alterar estado, responsabilidade ou observações; a inativação concorre com um lock compartilhado do perfil. Acesso administrativo direto continua sendo manutenção explícita, fora do contrato da aplicação e da geração de eventos dessas RPCs.
 
+## Exemplos para integrar as telas
+
+Usar `client` criado por `createBrowserSupabaseClient()` no navegador ou por
+`await createServerSupabaseClient()` no servidor. Ambos carregam a sessão atual;
+não enviar papel, solicitante, autor ou data como parâmetros de autorização.
+
+```ts
+// Cadastro/login/logout e contexto compartilham o cliente autenticado.
+const auth = createAuth(client);
+const contexto = await auth.context();
+// Sucesso: { ok: true, user: { id, email }, profile: { id, nome, papel, ativo, created_at } }
+// Sem sessão: { ok: false, error: "not_authenticated" }
+
+// Lista mais recente primeiro; RLS aplica o acesso do papel atual.
+const lista = await client.from("solicitacoes")
+  .select("id,numero,titulo,local,status,prioridade,responsavel_id,created_at", { count: "exact" })
+  .eq("status", "aprovada")
+  .order("created_at", { ascending: false }).order("id", { ascending: false })
+  .range(0, 19);
+// Sucesso: { data: [...], count: totalVisivel, error: null }; lista vazia é válida.
+
+const abertura = await client.rpc("abrir_solicitacao", {
+  p_titulo: "Lâmpada apagada", p_descricao: "Não acende ao ligar", p_local: "Sala 1",
+});
+// Sucesso: data contém a solicitação persistida em status "pendente".
+
+// Gestor usa um ID obtido da lista/detalhe autorizado.
+const aprovacao = await client.rpc("transicionar_solicitacao", {
+  p_id: solicitacaoId, p_status: "aprovada",
+});
+const organizacao = await client.rpc("organizar_solicitacao", {
+  p_id: solicitacaoId, p_prioridade: "alta", p_responsavel_id: manutentorId,
+});
+// Organizar envia sempre os dois valores desejados. Recusa: error.code "42501"
+// para ação não autorizada; "23514" para combinação inválida (ver tabela de erros).
+
+const historico = await client.from("historico").select("*")
+  .eq("solicitacao_id", solicitacaoId).order("created_at").order("id");
+// data inclui os eventos anteriores; [] também pode significar ID fora do acesso.
+```
+
+`createAuth` é importado de `src/lib/auth.ts`; os identificadores dos exemplos
+são valores do fluxo da tela. Tratar `error` antes de afirmar sucesso e consultar
+novamente após mutações para atualizar a apresentação. “Assunto” corresponde a
+`titulo`; categoria foi excluída do MVP pela spec de tabelas principais.
+
 ## Validação reproduzível
 
 `npm run rls:check -- local` ou `npm run rls:check -- cloud`, com configuração ignorada do ambiente escolhido e `FIXIT_AUTH_SQL_COMMAND` apontando para um helper privilegiado confiável que recebe SQL por stdin e retorna um array JSON (consultas) ou `[]` (mutações). O runner não precisa de chave administrativa: SQL prepara contas/identidades isoladas e o teste entra pelo Auth público real.

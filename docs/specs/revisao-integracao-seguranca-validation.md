@@ -65,7 +65,7 @@ Isso detecta divergência entre esses objetos, não substitui testes de comporta
 
 - `auth:check local` e `auth:check cloud`: **32 verificações por ambiente**, com limpeza confirmada.
 - `auth:check-next local` e `auth:check-next cloud`: **25 verificações por ambiente**, app temporário removido e fixtures conferidas.
-- `rls:check local` e `rls:check cloud`: **277 verificações por ambiente** na cobertura ampliada inicial, limpeza confirmada. A versão final inclui também paginação descendente (mais recentes primeiro): **285 verificações locais** aprovadas. Contagem pode variar legitimamente nas corridas conforme a ordem observada; registrar a execução cloud final abaixo.
+- `rls:check local` e `rls:check cloud`: **277 verificações por ambiente** na cobertura ampliada inicial, limpeza confirmada. A versão final inclui também paginação descendente (mais recentes primeiro): **285 verificações locais** e **287 cloud** aprovadas, com limpeza. A variação decorre da ordem válida das operações concorrentes, que pode exigir um início posterior pelo novo responsável.
 - Suite `supabase/tests/tabelas-principais.sql` local com `ON_ERROR_STOP=1`: aprovada, encerrada por `ROLLBACK`.
 
 Executar os comandos com Node 24.18.0/npm 11.16.0 e os arquivos ignorados `.env.supabase.local`/`.env.supabase.cloud`. Ver o README para `FIXIT_AUTH_SQL_COMMAND`, chave administrativa restrita ao runner Auth e caminhos de Playwright/navegador para o runner Next. Nenhuma credencial pertence a este relatório. O bridge SQL cloud é mecanismo temporário de preparação/limpeza pelo conector, não endpoint do aplicativo.
