@@ -177,6 +177,35 @@ try {
   await ok(gestor.client.rpc('organizar_solicitacao', { p_id: incomplete.id, p_prioridade: null, p_responsavel_id: manutentor.id }), 'Aprovada admite prioridade vazia');
   await denied(manutentor.client.rpc('transicionar_solicitacao', { p_id: incomplete.id, p_status: 'em_atendimento' }), 'Não inicia sem prioridade', ['23514']);
   await ok(gestor.client.rpc('organizar_solicitacao', { p_id: incomplete.id, p_prioridade: null, p_responsavel_id: null }), 'Aprovada admite remoção de atribuição');
+  // Frontend list queries must preserve RLS even with filters, counts and
+  // pagination; scope to fixture IDs so existing cloud data cannot affect it.
+  const listedIds = [opened.id, pending.id, incomplete.id];
+  for (const [identity, expectedIds] of [
+    [cliente.client, listedIds], [gestor.client, listedIds], [outro.client, []],
+    [manutentor.client, []], [substituto.client, [opened.id]],
+  ]) {
+    const listing = await identity.from('solicitacoes').select('id,status', { count: 'exact' })
+      .in('id', listedIds).order('created_at').order('id').range(0, 1).abortSignal(AbortSignal.timeout(15_000));
+    check(!listing.error && listing.count === expectedIds.length, 'Contagem de listagem respeita acesso por papel.');
+    assert.deepEqual(listing.data.map(row => row.id), expectedIds.slice(0, 2));
+    checks++;
+    const nextPage = await ok(identity.from('solicitacoes').select('id').in('id', listedIds)
+      .order('created_at').order('id').range(2, 3), 'Página seguinte autorizada');
+    assert.deepEqual(nextPage.map(row => row.id), expectedIds.slice(2, 4));
+    checks++;
+    const recent = await ok(identity.from('solicitacoes').select('id').in('id', listedIds)
+      .order('created_at', { ascending: false }).order('id', { ascending: false }).range(0, 1), 'Solicitações mais recentes primeiro');
+    assert.deepEqual(recent.map(row => row.id), [...expectedIds].reverse().slice(0, 2));
+    checks++;
+    const filtered = await ok(identity.from('solicitacoes').select('id').in('id', listedIds)
+      .eq('status', 'aprovada').order('created_at').order('id'), 'Filtro de status autorizado');
+    assert.deepEqual(filtered.map(row => row.id), expectedIds.filter(id => id === incomplete.id));
+    checks++;
+  }
+  const activeMaintainers = await ok(gestor.client.from('profiles').select('id').in('id', fixtures.map(row => row.id))
+    .eq('papel', 'manutentor').eq('ativo', true).order('id'), 'Seleção de Manutentores ativos');
+  assert.deepEqual(activeMaintainers.map(row => row.id), [manutentor.id, substituto.id].sort());
+  checks++;
   for (const identity of [cliente.client, gestor.client, manutentor.client]) {
     await denied(identity.rpc('transicionar_solicitacao', { p_id: randomUUID(), p_status: 'aprovada' }), 'ID inexistente não concede operação');
   }
