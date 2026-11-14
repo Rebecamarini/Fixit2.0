@@ -2,7 +2,7 @@
 
 Cartão: https://trello.com/c/a6qjxn8S
 
-Status: entrevista consolidada em 2026-11-12. Implementação e execução de testes ainda não autorizadas; aguardar pedido claro e separado.
+Status: execução autorizada separadamente pelo usuário em 2026-11-13 via `implement-spec`. Relatório: [revisao-integracao-seguranca-validation.md](revisao-integracao-seguranca-validation.md).
 
 ## Decisões confirmadas — 2026-11-12
 
@@ -72,3 +72,5 @@ Implementar telas finais; adicionar API própria Next.js sem necessidade demonst
 ## Encerramento da entrevista
 
 O usuário confirmou as decisões em perguntas separadas. Este documento consolida a especificação; essas respostas não autorizam executar testes mutáveis, implementar correções ou alterar bancos. Aguardar pedido claro e separado para iniciar a execução. Nesta entrevista foram feitas leituras e documentação, sem alteração de código de produto ou banco.
+
+O pedido separado foi recebido em 2026-11-13; a nota acima preserva o limite da entrevista. A execução e seu aceite são registrados no relatório vinculado no início.
