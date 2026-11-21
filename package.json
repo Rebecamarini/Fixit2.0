@@ -24,7 +24,9 @@
     "rls:check": "node scripts/check-rls.mjs",
     "auth:check": "node scripts/check-auth.mjs",
     "auth:check-next": "node scripts/check-next-auth.mjs",
-    "auth:provision": "node scripts/provision-auth.mjs"
+    "auth:provision": "node scripts/provision-auth.mjs",
+    "demo:preparar": "node scripts/demo-preparar.mjs",
+    "demo:resetar": "supabase db reset --local --yes && node scripts/demo-preparar.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.10.3",
