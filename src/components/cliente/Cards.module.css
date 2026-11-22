@@ -1,0 +1,47 @@
+
+.card {
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  padding: 22px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  box-shadow: 0 4px 18px #213b5c06;
+}
+
+.icone {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #e8f2ff;
+  color: #297cc7;
+  border-radius: 10px;
+  font-size: 18px;
+
+  margin-bottom: 15px;
+}
+
+.titulo {
+  color: #718199;
+  font-size: 13px;
+}
+
+.valor {
+  font-size: 29px;
+  color: #18253a;
+  margin-top: 5px;
+}
+
+@media (max-width: 650px) {
+  .card {
+    min-width: 0;
+    padding: 15px;
+  }
+}

@@ -1,0 +1,171 @@
+
+.sidebar {
+  width: 254px;
+  min-height: 100vh;
+  background-color: #101f35;
+  color: white;
+  padding: 26px 15px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  margin-bottom: 24px;
+}
+
+.logoIcon {
+  flex-shrink: 0;
+  background-color: #2e8de5;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 23px;
+  font-weight: bold;
+}
+
+.logo strong {
+  font-size: 23px;
+}
+
+.logo p {
+  font-size: 10px;
+  color: #9eb3c9;
+  margin: 0;
+  letter-spacing: 0.06em;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.menu a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #aec2d9;
+  text-decoration: none;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.menu a:hover,
+.menu a[aria-current="page"] {
+  background-color: #203c5e;
+  color: white;
+}
+
+.menu a[aria-current="page"] {
+  box-shadow: inset 3px 0 #57b2ff;
+}
+
+.footer {
+  margin-top: auto;
+  border-top: 1px solid #2b3b52;
+  padding: 15px 12px;
+  font-size: 12px;
+  color: #96afc8;
+}
+
+.footer p {
+  margin-bottom: 0;
+}
+
+.saida {
+  margin-top: 16px;
+}
+
+.saida a,
+.saida form button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid #526985;
+  border-radius: 9px;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.saida a:hover,
+.saida form button:hover {
+  background: #203c5e;
+}
+
+.saida a:focus-visible,
+.saida form button:focus-visible {
+  outline: 3px solid #57b2ff;
+  outline-offset: 3px;
+}
+
+.saida form button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.saida [role="alert"] {
+  color: #ffc7c7;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 205px;
+  }
+}
+
+@media (max-width: 650px) {
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    padding: 9px;
+    background: #14263d;
+  }
+
+  .logo,
+  .identificacao {
+    display: none;
+  }
+
+  .footer {
+    margin-top: 8px;
+    padding: 8px 0 0;
+  }
+
+  .saida {
+    margin-top: 0;
+  }
+
+  .menu {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 5px;
+  }
+
+  .menu a {
+    flex-shrink: 0;
+    gap: 5px;
+    padding: 8px 11px;
+    background: #233e5d;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
