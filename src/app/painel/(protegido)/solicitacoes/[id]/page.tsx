@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buscarHistorico, buscarSolicitacao, exigirUsuarioDaEquipe, listarManutentores } from "../../../../../lib/painel/dados";
+import { idSolicitacaoValido } from "../../../../../lib/painel/parametros";
 import { acoesPermitidas, formatarData } from "../../../../../lib/painel/regras";
 import { Historico, SeloPrioridade, SeloStatus } from "../../../componentes";
 import { BotaoStatus, FormObservacao, FormOrganizar } from "../../../formularios";
@@ -11,6 +12,7 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function PaginaDetalhe({ params }: Props) {
   const { id } = await params;
+  if (!idSolicitacaoValido(id)) notFound();
   const { supabase, perfil } = await exigirUsuarioDaEquipe();
 
   const solicitacao = await buscarSolicitacao(supabase, id);
@@ -60,6 +62,7 @@ export default async function PaginaDetalhe({ params }: Props) {
               id={id}
               prioridade={solicitacao.prioridade}
               responsavelId={solicitacao.responsavel_id}
+              responsavelAtual={solicitacao.responsavel}
               manutentores={manutentores}
             />
           )}

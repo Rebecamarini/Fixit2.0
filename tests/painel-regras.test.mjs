@@ -1,7 +1,7 @@
 // Testes das regras do painel: quem pode fazer o quê em cada status.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { acoesPermitidas } from '../src/lib/painel/regras.ts';
+import { acoesPermitidas, mensagemDeErro } from '../src/lib/painel/regras.ts';
 
 const gestor = { id: 'g1', papel: 'gestor' };
 const marcos = { id: 'm1', papel: 'manutentor' };
@@ -36,4 +36,13 @@ test('observações: Gestor ou responsável, enquanto não estiver encerrada', (
   assert.equal(acoesPermitidas(nina, solicitacao('em_atendimento')).observar, false);
   assert.equal(acoesPermitidas(gestor, solicitacao('concluida')).observar, false);
   assert.equal(acoesPermitidas(marcos, solicitacao('descartada')).observar, false);
+});
+
+// Sem código do banco, a resposta pode ter se perdido depois da gravação.
+test('falha de transporte orienta conferir o histórico antes de reenviar', () => {
+  assert.equal(
+    mensagemDeErro(undefined),
+    'Não foi possível confirmar a operação. Confira os dados e o histórico atualizados antes de enviar novamente.',
+  );
+  assert.equal(mensagemDeErro('42501'), 'Você não pode fazer essa ação agora. A página foi atualizada.');
 });

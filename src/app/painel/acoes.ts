@@ -18,7 +18,14 @@ export async function entrar(_anterior: Resposta, form: FormData): Promise<Respo
   const auth = createAuth(supabase);
   const resultado = await auth.signIn({ email: form.get("email"), password: form.get("senha") });
 
-  if (!resultado.ok) return { ok: false, mensagem: "E-mail ou senha incorretos." };
+  if (!resultado.ok) {
+    const mensagem = resultado.error === "unavailable"
+      ? "Não foi possível acessar o serviço. Tente novamente mais tarde."
+      : resultado.error === "profile_missing" || resultado.error === "profile_inactive"
+        ? "Seu perfil não tem acesso ao painel. Procure o responsável pelo sistema."
+        : "E-mail ou senha incorretos.";
+    return { ok: false, mensagem };
+  }
   if (resultado.profile.papel === "cliente") {
     await auth.signOut();
     return { ok: false, mensagem: "O painel é só para Gestor e Manutentor." };
@@ -26,9 +33,12 @@ export async function entrar(_anterior: Resposta, form: FormData): Promise<Respo
   redirect("/painel/solicitacoes");
 }
 
-export async function sair() {
+export async function sair(): Promise<Resposta> {
   const supabase = await createServerSupabaseClient();
-  await createAuth(supabase).signOut();
+  const resultado = await createAuth(supabase).signOut();
+  if (!resultado.ok) {
+    return { ok: false, mensagem: "Não foi possível sair. Sua sessão pode continuar ativa. Tente novamente." };
+  }
   redirect("/painel/entrar");
 }
 

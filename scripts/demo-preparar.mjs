@@ -5,18 +5,14 @@
 // Só funciona no ambiente local: a chave administrativa é lida do "supabase status" da sua máquina.
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { parseEnv } from 'node:util';
+import { getLocalDemoConfig } from './demo-config.mjs';
 import { createClient } from '@supabase/supabase-js';
 
 // 1) Configuração do Supabase local
-const env = Object.fromEntries(
-  readFileSync('.env.supabase.local', 'utf8').split('\n').filter(l => l.includes('=')).map(l => l.trim().split(/=(.*)/s)),
-);
-const url = env.NEXT_PUBLIC_SUPABASE_URL;
-const chavePublica = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-if (env.NEXT_PUBLIC_SUPABASE_ENV !== 'local') throw new Error('Este script só roda no Supabase local.');
-
+const env = parseEnv(readFileSync('.env.supabase.local', 'utf8'));
 const status = execSync('npx supabase status -o env', { encoding: 'utf8' });
-const chaveAdmin = status.match(/^SECRET_KEY="?([^"\n]+)/m)[1];
+const { url, publishableKey: chavePublica, adminKey: chaveAdmin } = getLocalDemoConfig(env, status);
 const admin = createClient(url, chaveAdmin, { auth: { persistSession: false } });
 
 // 2) Contas da demonstração

@@ -49,7 +49,10 @@ export function acoesPermitidas(usuario: Usuario, solicitacao: Solicitacao) {
 export function mensagemDeErro(codigo: string | undefined): string {
   if (codigo === "42501") return "Você não pode fazer essa ação agora. A página foi atualizada.";
   if (codigo === "23514") return "Dados inválidos. Lembre: para iniciar o atendimento a prioridade e o responsável precisam estar definidos.";
-  return "Não foi possível salvar. Tente novamente.";
+  if (!codigo) {
+    return "Não foi possível confirmar a operação. Confira os dados e o histórico atualizados antes de enviar novamente.";
+  }
+  return "Não foi possível salvar. Verifique os dados e tente novamente.";
 }
 
 export function formatarData(data: string): string {

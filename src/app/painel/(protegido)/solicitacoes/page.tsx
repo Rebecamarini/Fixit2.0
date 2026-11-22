@@ -1,18 +1,17 @@
 // MVP-05: lista de solicitações com filtro por status.
 // A URL guarda o filtro e a página: /painel/solicitacoes?status=pendente&pagina=2
 import Link from "next/link";
+import { normalizarFiltros } from "../../../../lib/painel/parametros";
 import { exigirUsuarioDaEquipe, listarSolicitacoes } from "../../../../lib/painel/dados";
 import { ITENS_POR_PAGINA, LISTA_STATUS, NOME_STATUS, formatarData } from "../../../../lib/painel/regras";
 import { SeloPrioridade, SeloStatus } from "../../componentes";
 import estilos from "../../painel.module.css";
 
-type Props = { searchParams: Promise<{ status?: string; pagina?: string }> };
+type Props = { searchParams: Promise<{ status?: string | string[]; pagina?: string | string[] }> };
 
 export default async function PaginaLista({ searchParams }: Props) {
   const { supabase, perfil } = await exigirUsuarioDaEquipe();
-  const filtros = await searchParams;
-  const status = filtros.status ?? null;
-  const pagina = Number(filtros.pagina) || 1;
+  const { status, pagina } = normalizarFiltros(await searchParams);
 
   // A RLS decide o que vem: Gestor recebe todas, Manutentor só as dele.
   const { solicitacoes, total } = await listarSolicitacoes(supabase, status, pagina);
@@ -37,32 +36,34 @@ export default async function PaginaLista({ searchParams }: Props) {
       {solicitacoes.length === 0 ? (
         <p className={estilos.vazio}>Nenhuma solicitação encontrada.</p>
       ) : (
-        <table className={estilos.tabela}>
-          <thead>
-            <tr>
-              <th>Nº</th>
-              <th>Título</th>
-              <th>Local</th>
-              <th>Status</th>
-              <th>Prioridade</th>
-              <th>Responsável</th>
-              <th>Aberta em</th>
-            </tr>
-          </thead>
-          <tbody>
-            {solicitacoes.map(s => (
-              <tr key={s.id}>
-                <td>#{s.numero}</td>
-                <td><Link href={`/painel/solicitacoes/${s.id}`}>{s.titulo}</Link></td>
-                <td>{s.local}</td>
-                <td><SeloStatus status={s.status} /></td>
-                <td><SeloPrioridade prioridade={s.prioridade} /></td>
-                <td>{s.responsavel?.nome ?? <span className={estilos.vazio}>Sem responsável</span>}</td>
-                <td>{formatarData(s.created_at)}</td>
+        <div className={estilos.tabelaRolagem}>
+          <table className={estilos.tabela}>
+            <thead>
+              <tr>
+                <th>Nº</th>
+                <th>Título</th>
+                <th>Local</th>
+                <th>Status</th>
+                <th>Prioridade</th>
+                <th>Responsável</th>
+                <th>Aberta em</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {solicitacoes.map(s => (
+                <tr key={s.id}>
+                  <td>#{s.numero}</td>
+                  <td><Link href={`/painel/solicitacoes/${s.id}`}>{s.titulo}</Link></td>
+                  <td>{s.local}</td>
+                  <td><SeloStatus status={s.status} /></td>
+                  <td><SeloPrioridade prioridade={s.prioridade} /></td>
+                  <td>{s.responsavel?.nome ?? <span className={estilos.vazio}>Sem responsável</span>}</td>
+                  <td>{formatarData(s.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <p className={estilos.paginacao}>

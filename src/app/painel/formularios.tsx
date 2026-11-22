@@ -5,12 +5,12 @@
 import { useActionState } from "react";
 import { LISTA_PRIORIDADES, NOME_PRIORIDADE, type Status } from "../../lib/painel/regras";
 import type { Pessoa } from "../../lib/painel/dados";
-import { adicionarObservacao, entrar, mudarStatus, salvarOrganizacao, type Resposta } from "./acoes";
+import { adicionarObservacao, entrar, mudarStatus, salvarOrganizacao, sair, type Resposta } from "./acoes";
 import estilos from "./painel.module.css";
 
 function Mensagem({ resposta }: { resposta: Resposta }) {
   if (!resposta) return null;
-  return <p className={resposta.ok ? estilos.mensagemOk : estilos.mensagemErro}>{resposta.mensagem}</p>;
+  return <p role="status" className={resposta.ok ? estilos.mensagemOk : estilos.mensagemErro}>{resposta.mensagem}</p>;
 }
 
 export function FormEntrar() {
@@ -27,6 +27,16 @@ export function FormEntrar() {
         <input name="senha" type="password" required />
       </label>
       <button className={estilos.botao} disabled={carregando}>{carregando ? "Entrando..." : "Entrar"}</button>
+      <Mensagem resposta={resposta} />
+    </form>
+  );
+}
+
+export function FormSair() {
+  const [resposta, acao, carregando] = useActionState(sair, null);
+  return (
+    <form action={acao}>
+      <button disabled={carregando}>{carregando ? "Saindo..." : "Sair"}</button>
       <Mensagem resposta={resposta} />
     </form>
   );
@@ -57,6 +67,7 @@ export function FormOrganizar(props: {
   id: string;
   prioridade: string | null;
   responsavelId: string | null;
+  responsavelAtual: Pessoa | null;
   manutentores: Pessoa[];
 }) {
   const [resposta, acao, carregando] = useActionState(salvarOrganizacao, null);
@@ -76,6 +87,11 @@ export function FormOrganizar(props: {
         Manutentor responsável
         <select name="responsavel" defaultValue={props.responsavelId ?? ""}>
           <option value="">Sem responsável</option>
+          {props.responsavelId && !props.manutentores.some(m => m.id === props.responsavelId) && (
+            <option value={props.responsavelId}>
+              {props.responsavelAtual?.nome ?? "Responsável atual"} (inativo)
+            </option>
+          )}
           {props.manutentores.map(m => (
             <option key={m.id} value={m.id}>{m.nome}</option>
           ))}

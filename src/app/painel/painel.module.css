@@ -1,7 +1,7 @@
 /* Estilos do painel. CSS Module: as classes valem só para os arquivos que importam este CSS. */
 
 /* Barra do topo */
-.topo { display: flex; align-items: center; gap: 1rem; padding: .75rem 1.5rem; background: #19352e; color: white; }
+.topo { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: .75rem 1.5rem; background: #19352e; color: white; }
 .topo a { margin: 0; color: white; text-decoration: none; flex: 1; }
 .topo button { cursor: pointer; }
 
@@ -40,6 +40,7 @@
 .filtros { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
 .filtros a { margin: 0; padding: .3rem .8rem; border: 1px solid #c9d6cb; border-radius: 1rem; background: white; text-decoration: none; font-weight: normal; }
 .filtros a.ativo { background: #235d43; color: white; }
+.tabelaRolagem { max-width: 100%; overflow-x: auto; }
 .tabela { width: 100%; border-collapse: collapse; background: white; }
 .tabela th, .tabela td { text-align: left; padding: .6rem; border-bottom: 1px solid #e3e9e3; }
 .tabela a { margin: 0; }
@@ -47,11 +48,11 @@
 .paginacao a { margin: 0; }
 
 /* Detalhes */
-.colunas { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; align-items: start; }
+.colunas { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
 @media (max-width: 800px) { .colunas { grid-template-columns: 1fr; } }
 .cartao { background: white; border: 1px solid #dce5dc; border-radius: .75rem; padding: 1rem 1.25rem; margin-bottom: 1rem; }
 .cartao h2 { font-size: 1.1rem; margin-top: 0; }
-.cartao p { margin: .3rem 0; }
+.cartao p { margin: .3rem 0; overflow-wrap: anywhere; }
 .cartao form { margin-bottom: 1rem; }
 
 /* Histórico */

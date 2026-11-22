@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { exigirUsuarioDaEquipe } from "../../../lib/painel/dados";
 import { NOME_PAPEL } from "../../../lib/painel/regras";
-import { sair } from "../acoes";
+import { FormSair } from "../formularios";
 import estilos from "../painel.module.css";
 
 export default async function LayoutPainel({ children }: { children: React.ReactNode }) {
@@ -17,9 +17,7 @@ export default async function LayoutPainel({ children }: { children: React.React
         <span>
           {perfil.nome} ({NOME_PAPEL[perfil.papel]})
         </span>
-        <form action={sair}>
-          <button>Sair</button>
-        </form>
+        <FormSair />
       </header>
       <main className={estilos.conteudo}>{children}</main>
     </>
