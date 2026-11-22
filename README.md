@@ -5,7 +5,7 @@ Novo projeto de gestão de solicitações de manutenção com escopo reduzido.
 - Código: https://github.com/Rebecamarini/Fixit2.0
 - Backlog: https://trello.com/b/SsT0I7Di/backlog-do-produto-fixit
 
-Stack da versão anterior: Next.js 16.4.2, React 19.3.1, TypeScript 5.9.3 e Supabase. Node 24.18.0 e npm 11.16.0; versões fixadas no package.json e package-lock.json.
+Stack: Next.js 16.4.6, React 19.3.1, TypeScript 5.9.3 e Supabase. Next.js e eslint-config-next foram atualizados juntos para o patch 16.4.6 após a auditoria de segurança. Node 24.18.0 e npm 11.16.0; versões fixadas no package.json e package-lock.json.
 
 ## Preparação e ambientes
 

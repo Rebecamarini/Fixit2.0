@@ -1,0 +1,62 @@
+/* Estilos do painel. CSS Module: as classes valem só para os arquivos que importam este CSS. */
+
+/* Barra do topo */
+.topo { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: .75rem 1.5rem; background: #19352e; color: white; }
+.topo a { margin: 0; color: white; text-decoration: none; flex: 1; }
+.topo button { cursor: pointer; }
+
+/* Área principal (sobrescreve o estilo de "main" do globals.css) */
+.conteudo { width: min(100% - 2rem, 70rem); margin: 1.5rem auto; padding: 0; background: none; border: 0; }
+.conteudo h1 { font-size: 1.8rem; letter-spacing: normal; }
+
+/* Login */
+.telaEntrar { width: min(100% - 2rem, 24rem); margin: 15vh auto; }
+.telaEntrar h1 { font-size: 2rem; letter-spacing: normal; }
+
+/* Formulários e botões */
+.campo { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .75rem; }
+.campo input, .campo select, .campo textarea { font: inherit; padding: .5rem; border: 1px solid #c9d6cb; border-radius: .4rem; }
+.botao, .botaoPerigo { font: inherit; font-weight: bold; color: white; border: 0; border-radius: .4rem; padding: .5rem 1rem; cursor: pointer; }
+.botao { background: #235d43; }
+.botaoPerigo { background: #a33a2b; }
+.botao:disabled, .botaoPerigo:disabled { opacity: .5; }
+.botoes { display: flex; gap: .5rem; }
+.mensagemOk { color: #1d6040; }
+.mensagemErro { color: #a33a2b; }
+
+/* Selos coloridos de status e prioridade */
+.selo { padding: .15rem .5rem; border-radius: 1rem; font-size: .8rem; font-weight: bold; vertical-align: middle; }
+.pendente { background: #fff3d6; }
+.aprovada { background: #dfeeff; }
+.em_atendimento { background: #ece3ff; }
+.concluida { background: #dcf3e5; }
+.descartada { background: #e5e5e5; }
+.baixa { background: #e6f0ea; }
+.media { background: #fff3d6; }
+.alta { background: #ffe1dd; }
+.vazio { color: #8aa197; }
+
+/* Lista */
+.filtros { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+.filtros a { margin: 0; padding: .3rem .8rem; border: 1px solid #c9d6cb; border-radius: 1rem; background: white; text-decoration: none; font-weight: normal; }
+.filtros a.ativo { background: #235d43; color: white; }
+.tabelaRolagem { max-width: 100%; overflow-x: auto; }
+.tabela { width: 100%; border-collapse: collapse; background: white; }
+.tabela th, .tabela td { text-align: left; padding: .6rem; border-bottom: 1px solid #e3e9e3; }
+.tabela a { margin: 0; }
+.paginacao { display: flex; gap: 1rem; }
+.paginacao a { margin: 0; }
+
+/* Detalhes */
+.colunas { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+@media (max-width: 800px) { .colunas { grid-template-columns: 1fr; } }
+.cartao { background: white; border: 1px solid #dce5dc; border-radius: .75rem; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.cartao h2 { font-size: 1.1rem; margin-top: 0; }
+.cartao p { margin: .3rem 0; overflow-wrap: anywhere; }
+.cartao form { margin-bottom: 1rem; }
+
+/* Histórico */
+.historico { padding-left: 1.2rem; }
+.historico li { margin-bottom: .75rem; }
+.historico small { color: #4d6a61; }
+.historico blockquote { margin: .3rem 0; padding: .5rem; background: #fbf8ef; border-left: 3px solid #d39a1a; white-space: pre-wrap; }
