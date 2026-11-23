@@ -1,0 +1,494 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FixIt v2 — Dossiê da frente do João</title><style>*{box-sizing:border-box}a,td,th,summary{overflow-wrap:anywhere}table{table-layout:fixed}@media(max-width:600px){main{padding:12px}section{padding:18px}td,th{padding:5px;font-size:12px}}body{margin:0;background:#eef2f6;color:#172638;font:16px/1.65 system-ui,sans-serif}header{background:#112c43;color:white;padding:55px max(6vw,24px)}main{max-width:1100px;margin:auto;padding:28px}h1{font-size:clamp(30px,5vw,52px);line-height:1.12}h2{color:#123c59;margin-top:0}h3{margin-bottom:8px}section{background:white;border:1px solid #d9e2eb;border-radius:14px;padding:30px;margin:24px 0;scroll-margin-top:20px}a{color:#006c91}header a{color:#9ce5ed}.tag{color:#8de2d2;font-weight:700}nav{display:flex;flex-wrap:wrap;gap:12px}nav a{padding:7px 12px;background:#e6f1f4;border-radius:6px}table{border-collapse:collapse;width:100%}td,th{text-align:left;vertical-align:top;border-bottom:1px solid #dce3e9;padding:12px}details{border:1px solid #dce3e9;border-radius:8px;padding:14px;margin:12px 0}summary{cursor:pointer;font-weight:650}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 ui-monospace,monospace;background:#f3f6f8;padding:20px;max-height:540px;overflow:auto}.note{border-left:4px solid #dc9d2d;padding:14px;background:#fff7e5}button{padding:10px 18px;cursor:pointer;border:0;border-radius:6px;background:#087c83;color:white}li{margin:8px 0}@media print{body{background:white;font-size:11pt}section{break-inside:auto;border:0;padding:10px}nav,button{display:none}pre{max-height:none}header{background:white;color:#172638;padding:10px}a{color:inherit}details{break-inside:avoid}}</style><header><div class="tag">FIXIT 2.0 • MATERIAL DE AVALIAÇÃO • 20/11/2026</div><h1>O que foi entregue na frente do João</h1><p>Seis tarefas obrigatórias, implementação, evidências e roteiro para avaliar domínio técnico.</p><p>Base inspecionada: main, merge db84b3a do PR #6. Resultados de testes abaixo são registros de 10–14/11, não uma nova execução.</p></header><main><button onclick="window.print()">Imprimir / salvar PDF</button><nav><a href="#t1">1. Setup Supabase</a><a href="#t2">2. Tabelas principais</a><a href="#t3">3. Autenticação</a><a href="#t4">4. RLS e operações autorizadas</a><a href="#t5">5. Persistência e histórico</a><a href="#t6">6. Revisão de integração e segurança</a></nav><section><h2>Como conduzir a conversa</h2><p class="note">“Frente do João” identifica responsabilidade no planejamento. Código, commits e relatórios comprovam entregas, mas não demonstram autoria manual exclusiva nem domínio individual. Há registros de execução assistida por agentes. Peça que ele explique, localize e demonstre; não use o material para presumir desconhecimento ou atribuir trabalho pessoal sem evidência.</p><p>Comece com uma explicação livre do fluxo completo. Depois escolha perguntas de cada tarefa e peça para abrir o trecho indicado. Só então abra as respostas esperadas. Aceite outras explicações tecnicamente corretas; não exija decorar nomes ou números.</p><ol><li>Explique a decisão e o problema que ela resolve.</li><li>Localize a implementação e acompanhe os dados entre as camadas.</li><li>Demonstre um caso válido e uma tentativa proibida usando contas de teste.</li><li>Explique o teste, seu resultado e o que ele não prova.</li></ol><p>Faça demonstrações em ambiente isolado. Os runners de integração preparam e removem fixtures e alguns induzem falhas temporárias; não são meras consultas de status.</p><h3>Mapa do fluxo</h3><p>Browser/Next.js → Supabase Auth e cookies → Data API com RLS para leitura → RPC para escrita → validação de identidade/papel/estado + lock → mudança e evento na mesma transação → resposta ao frontend.</p><p>O frontend usa chave publicável e sessão da pessoa. Acesso SQL administrativo é procedimento técnico separado e não substitui o teste de permissões reais.</p></section><section id="t1"><h2>1. Setup Supabase</h2><p><a href="https://trello.com/c/cMgHVTuv">Cartão do Trello</a> • Obrigatório concluído conforme conferência versionada</p><h3>O que entregou e por quê</h3><p>Criou a base de conexão exclusiva da v2, separando desenvolvimento local e cloud e impedindo que uma chave administrativa entrasse no navegador.</p><h3>Como foi feito</h3><p>A configuração valida ambiente, origem da URL e tipo de chave. O cliente browser usa @supabase/ssr; o servidor usa server-only e cookies. A RPC técnica setup_healthcheck retorna apenas fixit-v2:ok. A infraestrutura local documentada usa API 55321 e banco 55322, separadas da versão antiga.</p><h3>Resultados registrados</h3><p>Conexão por SDK, Server Component e Safari confirmada nos dois ambientes em 10/11. Nove testes e build/lint/tipos aprovados nessa etapa. Sessão foi adicionada na etapa de autenticação; a ausência de sessão citada no relatório inicial é histórica.</p><h3>Onde conferir</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/lib/supabase/config.ts">src/lib/supabase/config.ts</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/lib/supabase/client.ts">src/lib/supabase/client.ts</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/lib/supabase/server.ts">src/lib/supabase/server.ts</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-supabase.mjs">scripts/check-supabase.mjs</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261110224700_setup_healthcheck.sql">supabase/migrations/20261110224700_setup_healthcheck.sql</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/setup-supabase-validation.md">Relatório completo da tarefa</a></li></ul><h3>Perguntas e critérios de resposta</h3><details><summary>Por que a chave publicável pode estar no navegador?</summary><p><strong>Resposta esperada:</strong> Ela identifica o projeto e o papel público de acesso; a sessão e as políticas do banco delimitam os dados. Uma chave administrativa contornaria essa proteção. Mostrar a validação que rejeita segredos antes do bundle.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Como você distingue serviço disponível de regra de negócio funcionando?</summary><p><strong>Resposta esperada:</strong> O healthcheck confirma uma consulta técnica. Não comprova login, RLS, escrita nem funcionamento completo das telas.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>O que acontece se cloud receber URL localhost?</summary><p><strong>Resposta esperada:</strong> A configuração rejeita a combinação. Mostrar getSupabaseConfig e explicar HTTPS em cloud, loopback local e arquivos de ambiente ignorados.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details></section><section id="t2"><h2>2. Tabelas principais</h2><p><a href="https://trello.com/c/vrIpSvNe">Cartão do Trello</a> • Obrigatório concluído conforme conferência versionada</p><h3>O que entregou e por quê</h3><p>Modelou a identidade, a solicitação e seu histórico com integridade no PostgreSQL.</p><h3>Como foi feito</h3><p>profiles referencia auth.users e guarda nome, papel fixo e ativo. solicitacoes guarda UUID, número único sequencial, solicitante, título, descrição, local, status, prioridade e responsável. historico guarda eventos tipados com autor, data e valores anteriores/novos. Enums, CHECKs, FKs, índices e triggers impõem o contrato inclusive fora da interface. RLS foi habilitada antes de liberar políticas.</p><h3>Resultados registrados</h3><p>Migration 20261111201148 e suite SQL de integridade documentadas em local e cloud. Exclusões que rompem referências e edição/exclusão de histórico são recusadas. Desativação preserva vínculos.</p><h3>Onde conferir</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261111201148_tabelas_principais.sql">supabase/migrations/20261111201148_tabelas_principais.sql</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/tests/tabelas-principais.sql">supabase/tests/tabelas-principais.sql</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/tabelas-principais-validation.md">Relatório completo da tarefa</a></li></ul><h3>Perguntas e critérios de resposta</h3><details><summary>Por que existem UUID e número sequencial?</summary><p><strong>Resposta esperada:</strong> UUID é identidade interna; número facilita referência humana. Sequência pode ter lacunas e não reinicia anualmente.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>O que CHECK, FK e trigger resolvem neste modelo?</summary><p><strong>Resposta esperada:</strong> CHECK valida a própria linha, FK garante referências; regras entre tabelas e imutabilidade exigem mecanismos adicionais como triggers. Mostrar exemplos reais na migration.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Apagar conta e desativar perfil são equivalentes?</summary><p><strong>Resposta esperada:</strong> Não. A FK restritiva preserva autoria; ativo=false retira acesso de produto sem destruir solicitações e histórico.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Quais limites os formulários precisam respeitar?</summary><p><strong>Resposta esperada:</strong> Nome 120, título 150, local 200, descrição/observação 5000; textos obrigatórios não podem ser vazios. Categoria não faz parte deste MVP.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details></section><section id="t3"><h2>3. Autenticação</h2><p><a href="https://trello.com/c/FfU6Vsm9">Cartão do Trello</a> • Obrigatório concluído conforme conferência versionada</p><h3>O que entregou e por quê</h3><p>Entregou cadastro, login, contexto autenticado, logout e provisão técnica da equipe.</p><h3>Como foi feito</h3><p>createAuth recebe um cliente Supabase e centraliza validação e erros. Cadastro envia nome como metadado, mas o papel de Cliente é imposto pelo banco. Trigger cria perfil junto à conta; falha do perfil desfaz o cadastro. context usa getUser e consulta profiles. O navegador e servidor compartilham sessão por cookies; proxy renova e propaga cookies e define private, no-store. Gestor e Manutentor são provisionados por procedimento técnico.</p><h3>Resultados registrados</h3><p>32 verificações Auth por ambiente na revisão final. Sessão Next.js real: 25 por ambiente, com persistência, renovação, logout e isolamento. Não há tela de gestão de pessoas entregue por este cartão.</p><h3>Onde conferir</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/lib/auth.ts">src/lib/auth.ts</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/proxy.ts">src/proxy.ts</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/lib/supabase/server.ts">src/lib/supabase/server.ts</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/provision-auth.mjs">scripts/provision-auth.mjs</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-auth.mjs">scripts/check-auth.mjs</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-next-auth.mjs">scripts/check-next-auth.mjs</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261111231601_mvp01_auth.sql">supabase/migrations/20261111231601_mvp01_auth.sql</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/mvp-01-autenticacao-validation.md">Relatório completo da tarefa</a></li></ul><h3>Perguntas e critérios de resposta</h3><details><summary>Posso mandar papel=gestor no cadastro?</summary><p><strong>Resposta esperada:</strong> Não pode conceder privilégio. A entrada do wrapper rejeita campos extras e o banco impõe papel; chamada direta ao Auth também não deve elevar privilégio por metadados.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Por que criar perfil em trigger?</summary><p><strong>Resposta esperada:</strong> Conta e perfil ficam na mesma transação. Se o perfil falhar, não fica conta órfã. Explicar teste com falha real e nova tentativa.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Por que getUser e depois profiles?</summary><p><strong>Resposta esperada:</strong> Identidade validada pelo Auth não equivale a permissão de produto. Papel e atividade vêm do banco, não de user_metadata editável.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Por que o proxy atualiza request e response?</summary><p><strong>Resposta esperada:</strong> O processamento atual precisa ver os cookies renovados e o navegador precisa recebê-los para próximas requisições. Server Component não pode gravar cookies, daí o papel do proxy.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Logout invalida instantaneamente todo JWT em todos os dispositivos?</summary><p><strong>Resposta esperada:</strong> Não. Usa scope local; remove capacidade de renovação da sessão atual e cookies, sem prometer invalidação imediata de todo token já emitido. Outro dispositivo permanece autenticado.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Um inativo sempre retorna profile_inactive?</summary><p><strong>Resposta esperada:</strong> Não necessariamente: RLS pode ocultar o perfil e context retornar profile_missing. A tela deve tratar ambos como ausência de acesso.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details></section><section id="t4"><h2>4. RLS e operações autorizadas</h2><p><a href="https://trello.com/c/aTmY7Xk2">Cartão do Trello</a> • Obrigatório concluído conforme conferência versionada</p><h3>O que entregou e por quê</h3><p>Implementou isolamento de dados por pessoa e papel e operações estreitas de escrita.</p><h3>Como foi feito</h3><p>Cliente lê suas solicitações; Gestor lê todas; Manutentor lê as atualmente atribuídas. Histórico acompanha a visibilidade da solicitação; profiles revela somente pessoas necessárias. authenticated tem SELECT, mas não DML direto. Quatro RPCs públicas security invoker chamam implementações privadas privilegiadas, com search_path vazio, permissões explícitas, validação de perfil atual e locks.</p><h3>Resultados registrados</h3><p>Migration 20261112203635. Matriz ampliada chegou a 295 verificações por ambiente na revisão final. Perfil ausente/inativo, visitante, manipulação de IDs e metadados, DML direto e acesso a funções privadas foram cobertos.</p><h3>Onde conferir</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261112203635_mvp02_rls.sql">supabase/migrations/20261112203635_mvp02_rls.sql</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-rls.mjs">scripts/check-rls.mjs</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/mvp-02-integracao.md">docs/specs/mvp-02-integracao.md</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/mvp-02-rls-validation.md">Relatório completo da tarefa</a></li></ul><h3>Perguntas e critérios de resposta</h3><details><summary>Por que esconder botão não protege uma ação?</summary><p><strong>Resposta esperada:</strong> A pessoa pode chamar Data API/RPC diretamente. A decisão deve ser revalidada no banco usando identidade e perfil atuais.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Por que authenticated não é autorização suficiente?</summary><p><strong>Resposta esperada:</strong> Indica apenas sessão autenticada. Cada linha e cada operação precisam de vínculo/papel/atividade válidos.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Após reatribuir, o antigo responsável conserva acesso ao histórico?</summary><p><strong>Resposta esperada:</strong> Não nas próximas operações; o novo responsável vê o histórico completo, inclusive eventos anteriores.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Por que usar funções privilegiadas se RLS existe?</summary><p><strong>Resposta esperada:</strong> Para executar operações estreitas sem liberar escrita geral. Não basta SECURITY DEFINER: mostrar schema privado, permissões, search_path vazio, validação e wrappers invoker.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Como provar uma negativa de acesso sem depender da tela?</summary><p><strong>Resposta esperada:</strong> Autenticar duas pessoas reais, consultar ID conhecido da outra pela API e tentar RPC/DML direto. Verificar ausência de dados e de efeitos, não apenas texto de erro.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details></section><section id="t5"><h2>5. Persistência e histórico</h2><p><a href="https://trello.com/c/5rZFakvy">Cartão do Trello</a> • Obrigatório concluído conforme conferência versionada</p><h3>O que entregou e por quê</h3><p>Validou o fluxo transacional de solicitações e a rastreabilidade de cada alteração.</p><h3>Como foi feito</h3><p>abrir_solicitacao cria para o Cliente atual, Pendente e evento inicial. transicionar_solicitacao aplica triagem e atendimento. organizar_solicitacao recebe o par completo prioridade/responsável. adicionar_observacao registra novo evento. Autor e datas vêm do banco. Alteração e evento participam da mesma transação; locks serializam ações sobre uma solicitação. A entrega específica ampliou testes e evidências, sem exigir nova funcionalidade ou migration naquele momento.</p><h3>Resultados registrados</h3><p>Entrega integrada pelo PR #5. Evidências daquela etapa: 244 verificações locais e 245 cloud, variação por ordem concorrente válida; 11 testes no verify. Correção posterior de datas pertence à revisão final, não a esta entrega original.</p><h3>Onde conferir</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261112203635_mvp02_rls.sql">supabase/migrations/20261112203635_mvp02_rls.sql</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-rls.mjs">scripts/check-rls.mjs</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/persistencia-historico.md">docs/specs/persistencia-historico.md</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/persistencia-historico-validation.md">Relatório completo da tarefa</a></li></ul><h3>Perguntas e critérios de resposta</h3><details><summary>Quais transições são permitidas e por quem?</summary><p><strong>Resposta esperada:</strong> Gestor: Pendente→Aprovada ou Descartada. Responsável atual: Aprovada→Em atendimento→Concluída. Atendimento exige prioridade e responsável; não há reabertura.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Se o segundo evento de organização falhar, o que sobra?</summary><p><strong>Resposta esperada:</strong> Nada da operação: alteração dos dois campos e primeiro evento são desfeitos. Mostrar teste que induz falha real e confere estado anterior.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Enviar null em organizar significa manter valor?</summary><p><strong>Resposta esperada:</strong> Não: remove valor, quando o estado permite. É obrigatório enviar os dois valores desejados; a tela deve preservar explicitamente o campo que não quer mudar.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Repetir organização idêntica cria histórico?</summary><p><strong>Resposta esperada:</strong> Não. Sem diferença não há evento; mudar os dois campos gera dois eventos com pares anterior/novo.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Como provar que concorrência foi tratada?</summary><p><strong>Resposta esperada:</strong> Mostrar locks e testes de reatribuição/início e conclusão/observação. Explicar ordens válidas e por que não deve haver autorização obsoleta ou alteração parcial.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Perdi a resposta de uma observação; posso repetir automaticamente?</summary><p><strong>Resposta esperada:</strong> Reconsultar antes. Não há chave de idempotência; nova chamada explícita registra outra observação.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details></section><section id="t6"><h2>6. Revisão de integração e segurança</h2><p><a href="https://trello.com/c/a6qjxn8S">Cartão do Trello</a> • Obrigatório concluído conforme conferência versionada</p><h3>O que entregou e por quê</h3><p>Conferiu o backend completo que as duas frentes visuais consumirão e corrigiu falhas encontradas.</p><h3>Como foi feito</h3><p>Executou Auth real, consultas e RPCs, RLS, paginação, contagem, filtros e sessão em Next.js de produção com Chromium. O runner cria app temporário usando módulos reais e remove ao final. A revisão reproduziu recuo de 132,416 ms do relógio do banco; corrigiu datas pelo máximo entre relógio, criação e último evento +1 microssegundo, sob lock. Corrigiu também limpeza do runner para falhas locais não impedirem a tentativa de limpeza SQL.</p><h3>Resultados registrados</h3><p>PR #6 integrado, merge db84b3a. 295 RLS +25 Next por ambiente; Auth 32 por ambiente nessa entrega. 100 sequências completas de nove eventos após correção. Verify: 14 testes, lint, tipos e build. Cinco migrations e fingerprints de objetos coincidentes local/cloud; advisors sem achados na época.</p><h3>Onde conferir</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261114001621_monotonic_history_dates.sql">supabase/migrations/20261114001621_monotonic_history_dates.sql</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-next-auth.mjs">scripts/check-next-auth.mjs</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/next-auth-cleanup.mjs">scripts/next-auth-cleanup.mjs</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-rls.mjs">scripts/check-rls.mjs</a></li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/revisao-integracao-seguranca-validation.md">Relatório completo da tarefa</a></li></ul><h3>Perguntas e critérios de resposta</h3><details><summary>Por que clock_timestamp sozinho não garante ordem?</summary><p><strong>Resposta esperada:</strong> O relógio pode recuar ou repetir horário. A correção calcula limite lógico sob lock por solicitação; não promete ordem global e pode ficar à frente do relógio físico.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Como provar que o diagnóstico não foi um palpite?</summary><p><strong>Resposta esperada:</strong> Probe reproduziu na 22ª sequência; payload/autoria batiam com chamadas e tempo monotônico do executor avançava. Regressão com evento futuro falhou antes e passou depois.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Os 295 checks são 295 testes unitários?</summary><p><strong>Resposta esperada:</strong> Não. São verificações do runner contra API e banco reais. Os 14 testes do verify são outra camada; não somar números como se fossem o mesmo tipo de cobertura.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Como testou renovação sem esperar uma hora?</summary><p><strong>Resposta esperada:</strong> Antecipou vencimento armazenado no cookie mantendo JWT assinado/refresh real. Explicar limites dessa simulação e a rotação efetiva.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>Qual a diferença entre fingerprint igual e comportamento correto?</summary><p><strong>Resposta esperada:</strong> Fingerprint detecta divergência das definições comparadas, não cobre toda configuração e não substitui testes de comportamento.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>O que significa advisor vazio?</summary><p><strong>Resposta esperada:</strong> Nenhum achado naquele momento e no recorte da ferramenta; não é prova absoluta de segurança. Auditoria runtime sem vulnerabilidades conhecidas e aviso dev-only foram resultados históricos.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details><details><summary>O que uma falha de cleanup deve causar?</summary><p><strong>Resposta esperada:</strong> Continuar tentando outras limpezas, incluindo SQL, e retornar falha sem expor segredos. Mostrar os três testes com falhas induzidas.</p><p><strong>Aprofundamento:</strong> peça para localizar o código, mostrar a evidência e explicar o que aconteceria se essa proteção fosse removida.</p></details></section><section><h2>7. O que ainda não está entregue por essa frente</h2><p><a href="https://trello.com/c/AYEF78UP">MVP-12 — vínculo patrimonial</a> permanece opcional e aberto, compartilhado com Rebeca e dependente do MVP-11. A conferência não encontra solicitacoes_bens nem operação de vínculo na v2. Não contabilizar patrimônio da versão antiga como progresso.</p><p>As telas finais do Cliente, Gestor e Manutentor pertencem às outras frentes. Backend validado não comprova aceite visual, responsividade ou conclusão de todo o produto. Recuperação de senha, categorias, anexos, notificações e representação de solicitante não fazem parte dos seis cartões aprovados.</p><p>Os cartões antigos DEC-001/DEC-002 têm registros da versão anterior. Para esta avaliação valem CONTEXT.md, specs da v2 e contrato de integração: somente Cliente abre para si, sem categoria.</p></section><section><h2>Exercício prático de ponta a ponta</h2><ol><li>Entrar como Cliente A e abrir solicitação. Explicar UUID, número, estado inicial, autoria e evento.</li><li>Entrar como Cliente B e tentar consultar o UUID conhecido de A. Explicar por que não há vazamento.</li><li>Entrar como Gestor, aprovar e definir prioridade e responsável. Mostrar dois eventos se os dois campos mudarem.</li><li>Entrar como responsável, iniciar, adicionar observação e concluir. Mostrar pré-condições e histórico ordenado.</li><li>Tentar alterar a solicitação terminal e editar o histórico. Explicar recusa e ausência de efeitos.</li><li>Explicar reatribuição, perfil inativo e resposta de rede perdida sem improvisar mudanças no produto.</li></ol><p>Antes de executar, ele deve dizer qual cliente, chave, sessão e ambiente serão usados. Nunca pedir para mostrar senha, token ou chave administrativa. Os exemplos completos e códigos de erro estão no contrato de integração anexado.</p></section><section><h2>Ficha para registrar o entendimento</h2><table><tr><th>Critério</th><th>0</th><th>1</th><th>2</th><th>3</th></tr><tr><td>Explicação</td><td>Não explica</td><td>Repete termos</td><td>Explica o fluxo</td><td>Justifica escolhas e limites</td></tr><tr><td>Código</td><td>Não localiza</td><td>Localiza com ajuda</td><td>Acompanha implementação</td><td>Relaciona camadas e falhas</td></tr><tr><td>Demonstração</td><td>Não executa</td><td>Só caso feliz</td><td>Mostra caso permitido e negado</td><td>Confere dados e ausência de efeito parcial</td></tr><tr><td>Evidência</td><td>Sem suporte</td><td>Cita resultado</td><td>Relaciona teste e requisito</td><td>Explica cobertura, reprodução e limitações</td></tr></table><p>Aplique por tarefa e registre exemplos observados. Esta rubrica orienta a conversa; não é um critério acadêmico oficial nem prova de autoria. Consultar documentação durante a explicação é compatível com domínio técnico.</p></section><section><h2>Fontes completas para consulta</h2><p>Textos versionados preservados abaixo para consulta offline. Descrevem seus respectivos momentos; use o contrato final para comportamento vigente. Nenhuma credencial foi incluída.</p><details><summary>CONTEXT.md</summary><p><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/CONTEXT.md">Abrir fonte versionada</a></p><pre># FixIt 2.0
+
+Novo projeto para gestão de solicitações de manutenção, com escopo reduzido. A versão 1.0 na pasta irmã será descontinuada; sua implementação não representa progresso desta versão.
+
+O backlog fica no [Trello](https://trello.com/b/SsT0I7Di/backlog-do-produto-fixit). Os cartões atuais do MVP tratam de autenticação, solicitações, gestão e atendimento. Cliente solicita e acompanha; Gestor organiza; Manutentor atende solicitações atribuídas. Patrimônio está na lista Opcionais.
+
+O quadro também contém decisões e evidências históricas da versão antiga. Confirmar a aplicabilidade de cada requisito ao MVP antes de implementar. Esta base técnica não implementa histórias do produto.
+
+## Linguagem
+
+**Papel**: Função única de uma pessoa no FixIt: Cliente, Gestor ou Manutentor. É definido na criação e permanece fixo no MVP.
+
+**Cliente**: Pessoa que abre solicitações de manutenção para si e acompanha suas próprias solicitações.
+
+**Solicitante**: Cliente que abriu a solicitação. Abertura em nome de outra pessoa não faz parte do MVP.
+
+**Solicitação**: Pedido de manutenção aberto por um Cliente, com título, descrição e local. Pode estar Pendente, Aprovada, Em atendimento, Concluída ou Descartada.
+_Evitar_: Chamado.
+
+**Descartada**: Solicitação rejeitada pelo Gestor.
+
+**Prioridade**: Classificação Baixa, Média ou Alta definida pelo Gestor para organizar o atendimento. Pode estar indefinida antes da triagem.
+
+**Responsável**: Único Manutentor atribuído a uma solicitação. Uma solicitação pode ainda não ter responsável.
+
+**Histórico**: Registro dos acontecimentos de uma solicitação: abertura, mudanças de status, prioridade ou responsável e observações, com autor e data.
+
+**Perfil inativo**: Pessoa desativada no FixIt, cujos vínculos e registros anteriores são preservados.
+</pre></details><details><summary>docs/specs/frente-joao-conferencia.md</summary><p><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/frente-joao-conferencia.md">Abrir fonte versionada</a></p><pre># Conferência da frente do João
+
+Conferência solicitada pelo usuário após autorizar publicação e merge da revisão de integração e segurança. Fonte: cartões atuais do [Trello](https://trello.com/b/SsT0I7Di/backlog-do-produto-fixit), código da v2 e relatórios versionados. Não contabilizar registros históricos da versão antiga.
+
+## Resultado
+
+Os **seis cartões obrigatórios** da lista **Sprint Final— João** estão marcados como concluídos e possuem implementação e evidências correspondentes. A última entrega é a branch `integration/revisao-integracao-seguranca`, sobre a main `04d9028`; o resultado da publicação fica registrado no cartão de revisão. A conclusão da frente obrigatória não significa conclusão do produto inteiro.
+
+| Cartão | Conferência da implementação | Evidência |
+| --- | --- | --- |
+| [Setup Supabase](https://trello.com/c/cMgHVTuv) | Projeto v2 próprio, configuração por ambiente, SDK, clientes browser/servidor e healthcheck | `setup-supabase-validation.md`; migrations e `scripts/check-supabase.mjs` |
+| [Tabelas principais](https://trello.com/c/vrIpSvNe) | `profiles`, `solicitacoes`, `historico`, enums, FKs, constraints, imutabilidade e índices | `tabelas-principais-validation.md`; migration `20261111201148`; suite SQL |
+| [Autenticação](https://trello.com/c/FfU6Vsm9) | Cadastro, login/contexto/logout, perfil atômico, provisão da equipe e sessão compartilhada browser/servidor | `mvp-01-autenticacao-validation.md`; `src/lib/auth.ts`, clientes e proxy; Auth real 32 verificações em cada ambiente nesta entrega |
+| [RLS](https://trello.com/c/aTmY7Xk2) | Matriz de leitura por papel, quatro RPCs, DML direto bloqueado e perfil inativo sem acesso | `mvp-02-rls-validation.md`; migration `20261112203635`; RLS ampliada na revisão final |
+| [Persistência e histórico](https://trello.com/c/5rZFakvy) | Eventos transacionais, autoria/data, transições, observações, integridade, rollback e concorrência | `persistencia-historico-validation.md`; testes atuais; correção posterior da ordem temporal registrada na revisão final |
+| [Revisão de integração e segurança](https://trello.com/c/a6qjxn8S) | Fluxos do backend previstos para as telas, paginação/filtros, Next.js real, revisão do estado efetivo e correção da ordem do histórico | `revisao-integracao-seguranca-validation.md`: RLS 295 + Next.js 25 em cada ambiente, regressão RED/GREEN e 100 fluxos pós-correção; revisão final sem achados pendentes |
+
+As evidências históricas mantêm o recorte de sua data: frases sobre tabelas fechadas ou ausência de sessão no setup não descrevem o estado atual. O contrato vigente para integrar as telas é [mvp-02-integracao.md](mvp-02-integracao.md), atualizado com exemplos e limites da ordenação temporal.
+
+## O que permanece fora desses seis cartões
+
+- **[MVP-12 — Vincular bem patrimonial](https://trello.com/c/AYEF78UP): aberto, na lista Opcionais, atribuído a João e Rebeca.** Não há `solicitacoes_bens` nem operação de vínculo na v2. Depende dos bens do [MVP-11](https://trello.com/c/WnIvsGO6), também opcional e ainda aberto. Portanto, a afirmação de conclusão aplica-se à frente obrigatória, e não a toda tarefa que mencione João.
+- As frentes de Rebeca e Paulo ainda têm cartões abertos de telas e integração visual. O backend foi validado pelas interfaces que essas telas consumirão; isso não comprova aceite das telas finais. Nenhum cartão de frontend foi encerrado nesta conferência.
+- A auditoria completa registra um aviso moderado transitivo das ferramentas de desenvolvimento (`minimatch` no parser do ESLint), sem caminho demonstrado por requisições do produto; auditoria de dependências de produção sem vulnerabilidades conhecidas. Esse acompanhamento está documentado, sem ampliar o MVP ou prometer ausência absoluta de risco.
+- Provisão e desativação de pessoas continuam procedimentos técnicos, conforme o contrato aprovado, sem tela de gestão de perfis. Recuperação de senha, categorias, anexos e funcionalidades da versão antiga não são lacunas desses seis cartões aprovados.
+
+Não foram alterados responsáveis, listas ou escopo dos cartões opcionais. Não há tarefa obrigatória faltante identificada no recorte aprovado da frente do João.
+</pre></details><details><summary>docs/specs/mvp-02-integracao.md</summary><p><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/mvp-02-integracao.md">Abrir fonte versionada</a></p><pre># MVP-02 — Contrato para os frontends
+
+Cartão: https://trello.com/c/aTmY7Xk2. Regras completas na spec MVP-02.
+
+Usar o cliente Supabase autenticado existente, com a chave publicável e a sessão da pessoa. As consultas passam por RLS e as escritas usam as quatro operações abaixo. Não há INSERT, UPDATE ou DELETE direto da aplicação nas três tabelas. Nenhuma chave administrativa é necessária no frontend.
+
+## Consultas
+
+- `solicitacoes`: Cliente vê as próprias; Gestor vê todas; Manutentor vê somente as atualmente atribuídas. Usar filtros, ordenação e paginação normais da Data API. Um identificador fora do acesso retorna lista vazia.
+- `historico`: filtrar `solicitacao_id` e ordenar por `created_at`, depois `id`. O acesso acompanha a solicitação e inclui eventos/observações anteriores à atribuição atual.
+- `profiles`: próprio perfil, solicitante, responsável e autores/referências históricas das solicitações visíveis. Gestor também consulta Manutentores ativos para seleção, filtrando `papel = manutentor` e `ativo = true`. Isso não abre um diretório geral de pessoas. Perfis relacionados inativos continuam identificáveis pelas outras pessoas autorizadas, preservando o histórico.
+- Reatribuição remove imediatamente o acesso do antigo responsável nas próximas operações, inclusive ao histórico. O novo responsável recebe o histórico completo.
+- Sessão sem perfil ou com perfil inativo recebe listas vazias em todas as tabelas. O contexto de autenticação existente passa a devolver `profile_missing` também quando o perfil está oculto por inativação; tratar como ausência de acesso ao produto. Uma sessão Auth válida não garante autorização.
+- Visitante não tem SELECT nas tabelas de negócio; a consulta técnica de setup continua disponível.
+
+## Escritas
+
+Todas as RPCs retornam um objeto de registro em `data`, ou `error` sem alteração parcial. Os parâmetros são obrigatórios, inclusive quando admitem `null`.
+
+| RPC | Parâmetros | Retorno e autorização |
+| --- | --- | --- |
+| `abrir_solicitacao` | `p_titulo`, `p_descricao`, `p_local`: textos | Solicitação criada para o Cliente autenticado, Pendente, sem prioridade/responsável. |
+| `transicionar_solicitacao` | `p_id`: UUID; `p_status`: estado de destino | Solicitação atualizada. Gestor: Pendente → Aprovada ou Descartada. Responsável atual: Aprovada → Em atendimento; Em atendimento → Concluída. |
+| `organizar_solicitacao` | `p_id`: UUID; `p_prioridade`: `baixa`, `media`, `alta` ou `null`; `p_responsavel_id`: UUID ou `null` | Solicitação atualizada. Só Gestor em Aprovada ou Em atendimento. Enviar o par completo desejado; `null` remove o valor, respeitando as restrições do estado. |
+| `adicionar_observacao` | `p_id`: UUID; `p_observacao`: texto | Evento do histórico. Gestor ou responsável atual, antes de Concluída/Descartada. Cliente não comenta. |
+
+Estados persistidos: `pendente`, `aprovada`, `em_atendimento`, `concluida`, `descartada`. Em atendimento exige prioridade e responsável; ambos permanecem obrigatórios na conclusão. Nova atribuição exige Manutentor ativo. Em Aprovada, campos de organização podem ser definidos ou removidos separadamente enviando o outro valor atual.
+
+O relato (título, descrição, local), solicitante, identificadores e datas não são editáveis após a abertura. Perfis não são editáveis pela aplicação. Ativação/desativação permanece no procedimento técnico autorizado. Não há reabertura nem exclusão.
+
+## Histórico e erros
+
+Abertura e mudanças de estado/prioridade/responsável geram seus eventos dentro da mesma transação da operação. Alteração de dois campos gera dois eventos, ambos com autor e valores anteriores/novos. Organização sem diferença não gera eventos. Autor e datas vêm do banco, sem parâmetros editáveis; timestamps são obtidos após os locks, preservando a ordem real das operações concorrentes. Observações e eventos existentes não podem ser editados ou apagados.
+
+As datas dos eventos são estritamente crescentes dentro de cada solicitação,
+inclusive se o relógio do banco recuar ou produzir horários iguais. O banco usa
+o horário atual, limitado inferiormente à criação da solicitação e ao último
+evento acrescido de um microssegundo, sob o lock já usado pela operação. Em
+caso de ajuste do relógio, isso preserva a ordem lógica; a data pode ficar à
+frente do relógio até ele alcançar o último evento. Não há ordenação global
+prometida entre solicitações nem alteração retroativa de eventos existentes.
+
+- `42501`: acesso/ação não autorizados, inclusive perfil inativo/ausente, solicitação inacessível ou ação incompatível com o estado. Reconsultar o estado e apresentar mensagem de ação indisponível.
+- `23514`: entrada ou combinação de campos viola o contrato (limites, texto vazio, responsável inválido/inativo ou ausência de prioridade/responsável exigidos).
+- `23502`: campo obrigatório nulo; `22P02`: enum/UUID inválido. Corrigir os parâmetros.
+- `PGRST202`: assinatura inexistente, parâmetro extra ou contrato ainda não aplicado. Não confundir com autorização.
+- Falhas de rede/serviço devem ser tratadas separadamente. Após resposta perdida, reconsultar a solicitação antes de repetir uma ação. Observações não têm chave de idempotência; uma repetição explícita é um novo registro.
+
+Rotinas privilegiadas ficam no schema privado, com `search_path` vazio e permissões explícitas; wrappers públicos são `security invoker`. Só as operações estreitas autorizadas são acessíveis. Todas revalidam a pessoa ativa e bloqueiam a solicitação antes de alterar estado, responsabilidade ou observações; a inativação concorre com um lock compartilhado do perfil. Acesso administrativo direto continua sendo manutenção explícita, fora do contrato da aplicação e da geração de eventos dessas RPCs.
+
+## Exemplos para integrar as telas
+
+Usar `client` criado por `createBrowserSupabaseClient()` no navegador ou por
+`await createServerSupabaseClient()` no servidor. Ambos carregam a sessão atual;
+não enviar papel, solicitante, autor ou data como parâmetros de autorização.
+
+```ts
+// Cadastro/login/logout e contexto compartilham o cliente autenticado.
+const auth = createAuth(client);
+const contexto = await auth.context();
+// Sucesso: { ok: true, user: { id, email }, profile: { id, nome, papel, ativo, created_at } }
+// Sem sessão: { ok: false, error: &quot;not_authenticated&quot; }
+
+// Lista mais recente primeiro; RLS aplica o acesso do papel atual.
+const lista = await client.from(&quot;solicitacoes&quot;)
+  .select(&quot;id,numero,titulo,local,status,prioridade,responsavel_id,created_at&quot;, { count: &quot;exact&quot; })
+  .eq(&quot;status&quot;, &quot;aprovada&quot;)
+  .order(&quot;created_at&quot;, { ascending: false }).order(&quot;id&quot;, { ascending: false })
+  .range(0, 19);
+// Sucesso: { data: [...], count: totalVisivel, error: null }; lista vazia é válida.
+
+const abertura = await client.rpc(&quot;abrir_solicitacao&quot;, {
+  p_titulo: &quot;Lâmpada apagada&quot;, p_descricao: &quot;Não acende ao ligar&quot;, p_local: &quot;Sala 1&quot;,
+});
+// Sucesso: data contém a solicitação persistida em status &quot;pendente&quot;.
+
+// Gestor usa um ID obtido da lista/detalhe autorizado.
+const aprovacao = await client.rpc(&quot;transicionar_solicitacao&quot;, {
+  p_id: solicitacaoId, p_status: &quot;aprovada&quot;,
+});
+const organizacao = await client.rpc(&quot;organizar_solicitacao&quot;, {
+  p_id: solicitacaoId, p_prioridade: &quot;alta&quot;, p_responsavel_id: manutentorId,
+});
+// Organizar envia sempre os dois valores desejados. Recusa: error.code &quot;42501&quot;
+// para ação não autorizada; &quot;23514&quot; para combinação inválida (ver tabela de erros).
+
+const historico = await client.from(&quot;historico&quot;).select(&quot;*&quot;)
+  .eq(&quot;solicitacao_id&quot;, solicitacaoId).order(&quot;created_at&quot;).order(&quot;id&quot;);
+// data inclui os eventos anteriores; [] também pode significar ID fora do acesso.
+```
+
+`createAuth` é importado de `src/lib/auth.ts`; os identificadores dos exemplos
+são valores do fluxo da tela. Tratar `error` antes de afirmar sucesso e consultar
+novamente após mutações para atualizar a apresentação. “Assunto” corresponde a
+`titulo`; categoria foi excluída do MVP pela spec de tabelas principais.
+
+## Validação reproduzível
+
+`npm run rls:check -- local` ou `npm run rls:check -- cloud`, com configuração ignorada do ambiente escolhido e `FIXIT_AUTH_SQL_COMMAND` apontando para um helper privilegiado confiável que recebe SQL por stdin e retorna um array JSON (consultas) ou `[]` (mutações). O runner não precisa de chave administrativa: SQL prepara contas/identidades isoladas e o teste entra pelo Auth público real.
+
+O helper precisa executar transações, preparar/limpar fixtures e adicionar/remover uma restrição temporária restrita a uma solicitação de teste para provocar falha real do evento. A preparação nunca substitui as operações autenticadas testadas. A limpeza desliga triggers somente na sessão/transação de manutenção durante a remoção do histórico de teste e restaura o modo normal antes de remover os outros registros, preservando cascatas Auth. O runner confere ausência de contas, perfis, identidades, sessões e refresh tokens das fixtures ao finalizar.
+
+A suite cobre matriz de leitura/escrita, chamadas diretas, campos forjados, metadados públicos, perfis inativos/ausentes, transições, terminais, reatribuição, auditoria, rollback e corridas entre reatribuição/início e conclusão/observação. Testes de autenticação e integridade existentes permanecem complementares.
+</pre></details><details><summary>docs/specs/setup-supabase-validation.md</summary><p><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/setup-supabase-validation.md">Abrir fonte versionada</a></p><pre># Evidências — setup Supabase
+
+Data: 2026-11-10. Cartão: https://trello.com/c/cMgHVTuv
+
+## Infraestrutura
+
+- Projeto cloud novo: `fixit-v2`, ref `wvdqynbngsveqyzsphre`, organização `Junior&#x27;s Org`, região `sa-east-1`. Organização Free; cotação de criação US$ 0/mês.
+- Supabase local da v2 iniciado e saudável no contexto Docker `colima-fixit-validation`, com API em `127.0.0.1:55321` e PostgreSQL em `55322`. Serviços do projeto antigo preservados nas portas próprias.
+- Configurações reais local/cloud e configuração ativa gravadas apenas em arquivos ignorados pelo Git, com chaves publicáveis. Configuração ativa final: cloud.
+- Migration `20261110224700_setup_healthcheck.sql` aplicada nos dois ambientes. O MCP cloud gerou inicialmente outra versão para o mesmo SQL; a única entrada do histórico cloud foi alinhada à versão do arquivo. Listagens local e cloud confirmaram `20261110224700`.
+
+## Consultas e segurança
+
+- Comando de verificação via SDK: local e cloud retornaram conexão e consulta confirmadas.
+- RPC `setup_healthcheck()` retornou `fixit-v2:ok` nos dois ambientes com chave publicável.
+- Consultas ao catálogo confirmaram `security invoker`, `search_path` vazio e permissão de execução para `anon`/`authenticated`, sem concessão a `PUBLIC`.
+- Advisors de segurança: nenhum problema no local ou cloud.
+
+## Next.js e navegador real
+
+Uma página temporária importou os clientes reais, consultou a RPC em Server Component e em um efeito do Client Component. O servidor Next.js foi iniciado separadamente para cada configuração; o Safari acessou a página nos dois casos.
+
+| Ambiente | Server Component | Safari / Client Component |
+| --- | --- | --- |
+| Cloud | `fixit-v2:ok` | `fixit-v2:ok` |
+| Local | `fixit-v2:ok` | `fixit-v2:ok` |
+
+A página temporária foi removida após a validação; nenhum endpoint ou tela técnica faz parte do produto. Os clientes continuam sem suporte a sessão por decisão de escopo; o aviso de múltiplas instâncias do SDK no modo estrito de desenvolvimento não impediu as consultas.
+
+## Verificação final do código
+
+Concluída na branch `integration/setup-supabase`:
+
+- `npm run verify`: nove testes, lint, tipos e build aprovados.
+- Revisão Standards: nenhum achado. Revisão Spec: um achado de segurança corrigido e reavaliado sem pendências.
+- O preflight do Next.js bloqueia chaves privilegiadas antes da compilação ou do serviço de código cliente. A regressão executa builds reais com valores sentinela de chave secreta e `service_role`, confirmando falha antes de gerar o bundle e sem imprimir os valores.
+- O build final contém somente a página inicial e a página padrão de não encontrado; nenhuma rota técnica permaneceu.
+- `git diff --check`: aprovado.
+</pre></details><details><summary>docs/specs/tabelas-principais-validation.md</summary><p><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/tabelas-principais-validation.md">Abrir fonte versionada</a></p><pre># Evidências — tabelas principais
+
+Data: 2026-11-11. Cartão: https://trello.com/c/vrIpSvNe.
+Branch: `integration/tabelas-principais`.
+
+## Entrega
+
+- Migration `20261111201148_tabelas_principais.sql`: profiles, solicitacoes e historico, enums, FKs restritivas, limites de texto, número sequencial, validações de papel/atividade e combinação de estado, preservação de autoria e histórico imutável.
+- Funções de integridade em schema privado, `security invoker`, `search_path` fixado e execução pública revogada. Nenhuma função privilegiada ou endpoint novo.
+- RLS habilitada nas três tabelas e privilégios de anon/authenticated revogados. Políticas do produto e geração automática de eventos permanecem nos cartões próprios.
+- Implementação no commit `d3eb602`; correção do teste de API em `6796b42`; integração final de código em `705ccd7`.
+
+## Banco real
+
+| Verificação | Local | Cloud v2 |
+| --- | --- | --- |
+| Suite SQL transacional, com casos positivos e negativos | Aprovada | Aprovada |
+| 24 operações reais da API com anon e authenticated | Aprovadas | Aprovadas |
+| RPC técnica de setup | `fixit-v2:ok` | `fixit-v2:ok` |
+| Versão registrada no histórico | `20261111201148` | `20261111201148` |
+
+Local: contexto Docker `colima-fixit-validation`, banco `supabase_db_fixit-v2`. O desenvolvimento seguiu ciclos RED→GREEN por tabela com SQL direto. A migration completa também foi reproduzida dentro de transação, recriando somente os objetos novos e executando a suite, seguida de rollback. O histórico foi registrado com `migration repair --local --status applied` após a confirmação do schema e da reprodução integral, sem reset dos dados existentes.
+
+Cloud: projeto exclusivo `wvdqynbngsveqyzsphre`. Aplicação pelo conector Supabase; o MCP atribuiu inicialmente versão `20261111201753`, alinhada à versão do arquivo após aplicação. A suite SQL completa executou com sucesso e rollback. Consultas posteriores confirmaram zero linhas nas três tabelas de negócio.
+
+Os testes cobrem referências inexistentes, valores e papéis inválidos, campos vazios/limites, atribuição a inativos, preservação dos vínculos após desativação, proibição de alterar identidade/autoria, combinações de estado, eventos incompatíveis, exclusões restritas e imutabilidade do histórico inclusive com service_role. Nenhum teste depende de detalhes internos dos triggers.
+
+As verificações HTTP exigiram erros explícitos de permissão/não exposição para todas as operações; respostas vazias de sucesso não contam como bloqueio. Sessões Auth reais e temporárias foram provisionadas sem envio de e-mail, usadas no ambiente correspondente, encerradas globalmente (HTTP 204) e suas contas removidas. Nenhuma fixture de negócio persiste; lacunas da sequência são esperadas. Tokens e credenciais temporários permaneceram fora do Git e foram removidos após os testes.
+
+## Revisão e verificações do repositório
+
+- `npm run verify`: nove testes, lint, tipos e build aprovados após integração.
+- Correção posterior limitada ao verificador de API e README: 24 operações locais e 24 cloud aprovadas novamente; lint aprovado.
+- `git diff --check`: aprovado.
+- Code-review Standards: nenhum achado. Spec: um achado de falso positivo no teste da API corrigido e reavaliado sem pendências.
+
+## Advisors e limites de escopo
+
+Advisors locais não apontaram problemas. No cloud, as informações sobre RLS sem políticas correspondem ao fechamento deliberado até o MVP-02; índices ainda não utilizados correspondem ao banco novo sem carga de produto. Não foram identificados avisos ou erros nas tabelas ou funções entregues.
+
+O advisor cloud também informou proteção contra senhas vazadas desabilitada no Auth. Essa configuração de autenticação não é alterada por esta migration e deverá ser avaliada no MVP-01, respeitando o plano gratuito. Referências: [RLS sem políticas](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy), [índices sem uso](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index), [proteção de senhas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+A entrega cria e protege a estrutura. Não entrega login, telas, políticas por papel, transições completas nem gravação automática do histórico.
+</pre></details><details><summary>docs/specs/mvp-01-autenticacao-validation.md</summary><p><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/mvp-01-autenticacao-validation.md">Abrir fonte versionada</a></p><pre># Validação — MVP-01
+
+Cartão: https://trello.com/c/FfU6Vsm9. Implementação autorizada explicitamente
+pelo usuário via implement-spec em 2026-11-11.
+
+## TDD e contrato
+
+- RED: teste de entrada inválida falhou porque o módulo ainda não existia.
+  GREEN: validação pública recusa nome/e-mail/forma inválidos e concessão de papel.
+- RED: teste de login/falha de rede falhou por operação ainda ausente.
+  GREEN: operações retornam estados públicos sem divulgar respostas do provedor.
+- RED real local: criação administrativa retornava papel Cliente; o Auth aplica
+  app_metadata depois do INSERT inicial. GREEN: trigger de constraint diferível
+  consulta os metadados administrativos ao concluir a transação. Perfil nasce
+  com papel definitivo, preservando a atomicidade e a restrição de imutabilidade.
+- Interface principal dos testes reais: createAuth com cliente SSR e cookies
+  persistentes. SQL é auxiliar para conferir rollback, preparar perfil ausente/
+  inativo e limpar fixtures. Não foi criada tela nem endpoint técnico no produto.
+
+## Verificações executadas na worktree
+
+- 11 testes node:test aprovados, lint e typecheck aprovados.
+- Supabase local real: 32 verificações de cadastro, vínculo, metadados adversariais,
+  login da equipe, rollback, renovação, logout e isolamento aprovadas; fixtures
+  removidas. O executor é reutilizável em cloud com helper SQL e segredo privados.
+- Build na worktree encontrou limitação do Turbopack por node_modules ser um link
+  para fora da raiz. A validação final do build deve ocorrer após integração na
+  raiz do projeto, onde as dependências são locais; não é evidência de aprovação.
+
+## Consolidação na branch de integração
+
+- Código integrado em `d3c4778`, com implementação em `df3046f`.
+- `npm run verify` na raiz: 11 testes, lint, tipos e build aprovados. A limitação do link de dependências da worktree não ocorre na raiz.
+- Smoke do Next em produção: página respondeu HTTP 200 com o proxy ativo e Cache-Control private, no-store; servidor de teste encerrado após a conferência.
+- 32 verificações reais de autenticação aprovadas também no cloud v2; o teste chama o comando administrativo real para criar Gestor e Manutentor.
+- Suite SQL de integridade anterior aprovada em local e cloud, com fixtures adaptadas à associação automática. Reprodução integral da migration final dentro de transação seguida da suite também aprovada nos dois ambientes, com rollback.
+- 24 verificações reais da API aprovadas em cada ambiente, incluindo o novo SELECT do próprio perfil e o bloqueio de escrita e das outras tabelas.
+- Migration `20261111231601` registrada nos dois ambientes. O MCP atribuiu versão cloud inicial `20261111231658`, alinhada ao arquivo após aplicação; a correção do trigger foi aplicada antes do aceite dos testes e reproduzida pela migration final.
+- Cloud: projeto exclusivo `wvdqynbngsveqyzsphre`. Confirm email desligado no painel após confirmação explícita do usuário no momento da alteração. Cadastro sem confirmação e entrada imediata comprovados pela suite pública real.
+- Política de senha observada: mínimo de seis caracteres; proteção de senhas vazadas indisponível no plano gratuito. Não houve contratação de plano nem mudança de senha de pessoas.
+- Advisors de segurança: somente informações esperadas sobre RLS sem políticas em solicitações/histórico, que permanecem fechados até o MVP-02; nenhuma nova vulnerabilidade apontada. [Referência do aviso](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
+- Limpeza conferida por SQL: zero contas, perfis e sessões no cloud; zero contas e perfis locais após remover as fixtures. Segredo administrativo existente foi usado somente em processo privado de teste e seu arquivo temporário foi removido. Nenhuma credencial integra Git ou este arquivo.
+
+## Verificação adicional em navegador real
+
+Harness temporário fora do repositório compilou o módulo `createAuth` e o cliente exportado `createBrowserSupabaseClient`, sem adicionar tela ou endpoint ao produto. No Safari, contra Supabase local real:
+
+1. Estado inicial desconectado; cadastro pela interface pública resultou em sessão e perfil Cliente.
+2. Fechar a aba e abrir novamente a página restaurou a sessão sem login.
+3. Uma segunda aba reconheceu a mesma sessão.
+4. Logout na segunda aba retornou estado desconectado e evento SIGNED_OUT; a primeira aba também recebeu o evento e sua consulta de contexto retornou not_authenticated.
+
+A fixture foi removida, as abas e o servidor temporários foram encerrados. Esse teste comprova reabertura de página e saída entre abas; não encerrou o processo Safari nem simula inatividade de longa duração. A suite automatizada verifica cookies persistentes e renovação real, sem esperar horas por expiração.
+
+## Revisão em dois eixos
+
+- Standards: zero violações documentadas ou smells acionáveis.
+- Spec: zero defeitos bloqueantes ou desvios de escopo. A revisão identificou a limitação da simulação por Map na suite; a verificação adicional acima exercitou o cliente de navegador real.
+- O adaptador de Server Components não possui uma rota de teste própria; não foi criado endpoint técnico no produto para ampliar a cobertura.
+</pre></details><details><summary>docs/specs/mvp-02-rls-validation.md</summary><p><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/mvp-02-rls-validation.md">Abrir fonte versionada</a></p><pre># Validação — MVP-02
+
+Cartão: https://trello.com/c/aTmY7Xk2. Implementação autorizada explicitamente pelo usuário via implement-spec em 2026-11-12.
+
+## Entrega
+
+Branch `integration/mvp-02-rls`. Spec versionada em `d2967f9`, implementação em `a6c0ea9`, merge sem conflitos em `26803d3`. Implementação feita em worktree própria baseada na integração, com TDD e integração final conferida. Nenhuma funcionalidade ou credencial da versão antiga foi importada.
+
+Migration `20261112203635_mvp02_rls.sql`: leitura de solicitações/histórico/perfis por RLS e quatro operações autenticadas para abertura, transição, organização e observações. Escrita direta nas tabelas continua fechada. As operações usam identidade confiável, locks de perfil/solicitação, estados válidos e eventos atômicos. Rotinas privilegiadas ficam em schema privado; wrappers públicos são security invoker e grants são explícitos.
+
+Contrato efetivo documentado em [mvp-02-integracao.md](mvp-02-integracao.md). Perfil inativo fica invisível até para a própria sessão; a integração Auth existente retorna `profile_missing` nesse caso, sem conceder acesso ao produto. Não foram adicionadas telas nem dependências.
+
+## TDD e banco local
+
+- Primeiro RED real: API retornou `PGRST202` porque a operação de abertura não existia. GREEN: abertura pela sessão Cliente e evento automático passaram; demais comportamentos foram acrescentados por ciclos incrementais.
+- Migration criada pela CLI e iterada por SQL local; versão final reproduzida do estado anterior e registrada pela CLI. Listagem final local confirma as quatro versões, incluindo `20261112203635`.
+- Suite real `rls:check local`: 227 verificações aprovadas na execução final; o número pode variar ligeiramente conforme o resultado válido das corridas.
+- Smoke de API anterior: 24 verificações aprovadas, chamado também pelo runner de RLS. Autenticação real existente: 32 verificações aprovadas. Suite SQL de integridade existente aprovada.
+- Advisors de segurança local: nenhum problema. Contagem final local: zero contas, identidades, sessões, perfis, solicitações e eventos.
+- Durante iterações iniciais, a limpeza com triggers desabilitados deixou identidades de fixtures; o executor foi corrigido para restaurar triggers antes das cascatas Auth. Resíduos identificados pelo prefixo exato de teste foram removidos e a limpeza final foi conferida.
+
+## Cloud v2
+
+Projeto exclusivo `wvdqynbngsveqyzsphre`, com as três migrations anteriores conferidas antes da alteração. A mesma migration final foi aplicada. O MCP atribuiu inicialmente `20261112204432`; a entrada do histórico foi alinhada ao arquivo `20261112203635`, com as quatro versões conferidas.
+
+`rls:check cloud`: 227 verificações reais aprovadas, incluindo o smoke anterior da API. A preparação privilegiada usou um helper SQL temporário fora do repositório, com entrada/saída privadas; as operações testadas usaram chave publicável e login Auth real. Nenhuma chave administrativa foi necessária no runner.
+
+A primeira tentativa foi interrompida por um erro de leitura das respostas do conector no adaptador SQL temporário. O adaptador foi corrigido; contas da tentativa foram limpas e a execução completa passou. Não houve alteração de código de produto para contornar a falha do adaptador.
+
+Cobertura: três papéis, visitante, outro Cliente/Manutentor, perfil ausente/inativo com sessão válida, visibilidade de perfis relacionados, metadados/identidade forjados, escrita direta, transições indevidas, estados terminais, reatribuição e perda de acesso, observações imutáveis, eventos automáticos e ausência de eventos sem mudança. Uma restrição temporária limitada à solicitação de teste provocou falha real de evento e comprovou rollback da mudança. Corridas reais pela API exercitaram reatribuição/início e conclusão/observação, com resultados compatíveis com execução serial e histórico ordenado.
+
+Advisors de segurança cloud: nenhum achado. Limpeza SQL final: zero contas, identidades, sessões, perfis, solicitações e eventos. O executor também confere refresh tokens de fixtures e remove a restrição temporária. Nenhuma credencial integra Git ou este relatório.
+
+## Código e revisão
+
+- `npm run verify` na raiz da integração: 11 testes, lint sem avisos, tipos e build Next aprovados. Build final contém somente página inicial, não encontrado e proxy; não há tela técnica nova.
+- A worktree usava symlink de dependências, recusado pelo Turbopack; o build aprovado ocorreu na raiz com dependências locais.
+- Revisões independentes sobre `git diff main...26803d3`: Standards — zero achados; Spec — zero achados. Foram revisados autorização, grants, escopo privado das rotinas, visibilidade, inativação, atomicidade e concorrência.
+- `git diff --check` aprovado.
+
+## Limites
+
+A validação usa a API real, conforme decisão da entrevista; não foram criadas telas para testes de navegador. A suite antiga completa de Auth foi repetida localmente; no cloud, a suite de RLS verifica login real das cinco fixtures e autorização, sem repetir integralmente a suite antiga de sessão/logout. As corridas são testes de comportamento, não prova formal de todas as escalas e escalonamentos possíveis.
+
+As RPCs produzem eventos das operações da aplicação; manutenção administrativa direta permanece explícita e fora desse contrato. A integração mínima com histórico foi entregue neste cartão; o cartão separado de persistência não é automaticamente considerado concluído.
+</pre></details><details><summary>docs/specs/persistencia-historico-validation.md</summary><p><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/persistencia-historico-validation.md">Abrir fonte versionada</a></p><pre># Validação — persistência e histórico
+
+Cartão: https://trello.com/c/5rZFakvy. Spec: [persistencia-historico.md](persistencia-historico.md).
+
+Implementação autorizada pelo usuário via `implement-spec` em 2026-11-12. Worktree `work/persistencia`, criada a partir da integração `integration/persistencia-historico` em `def91f9`.
+
+## Resultado
+
+A implementação existente de tabelas principais e MVP-02 atende aos requisitos de produto deste cartão. Não foi necessária mudança de schema, RPC, regra de negócio ou frontend. A entrega completa lacunas de evidência no executor de integração existente e valida novamente o contrato pela API real nos dois ambientes da v2.
+
+## Matriz do cartão
+
+| Requisito | Implementação existente | Verificação atual |
+| --- | --- | --- |
+| Garantir valores válidos de status | Enum de status, restrições de integridade e RPC de transição com autorização | RPC com status fora do domínio retorna `22P02`, preservando estado e histórico; fluxo permitido e recusas por papel/estado; suite SQL de integridade local |
+| Gravar alterações no histórico | Abertura, transição e organização acrescentam eventos na transação; observações autorizadas somente de acréscimo | Comparação completa dos nove eventos de um fluxo real: abertura, três transições, duas mudanças de prioridade, duas de responsável e uma observação; ausência de evento na organização sem diferença; imutabilidade de evento existente |
+| Registrar autor e data | Operador vem da sessão e perfil ativo; datas vêm do banco, após locks; API não recebe autor/data | Autor, vínculo, data válida/atual e campos anteriores/novos conferidos nos eventos do fluxo; parâmetros forjados recusados; observações com autoria correta |
+| Validar integridade e transições | Restrições de campos/vínculos, matriz de autorização, locks e transações atômicas | Estados terminais, inativação, reatribuição, campos obrigatórios, chamadas diretas, duas corridas reais; falha de evento de status desfaz transição; falha do segundo evento da organização desfaz ambos os campos e o primeiro evento |
+
+## Lacunas de cobertura fechadas
+
+O executor já comprovava o fluxo, autorização, atomicidade de status e concorrência. Faltava conferir explicitamente pela API o enum de status inválido sem efeitos, o conteúdo completo dos pares anteriores/novos de todos os tipos de evento, autoria/data/vínculo em todo o fluxo e o rollback quando a organização falha ao registrar seu segundo evento. As tentativas de edição/exclusão agora também apontam para o identificador de uma observação real, com conferência de preservação do conteúdo original.
+
+As verificações acrescentadas passaram sobre a implementação existente. Não houve ciclo RED/GREEN de correção de produto: são testes de caracterização de comportamentos já entregues, sem alteração artificial para provocar um RED. Nenhuma abstração, dependência ou executor paralelo foi criado.
+
+## Execuções novas — 2026-11-12
+
+- `npm run rls:check -- local`: **244 verificações reais aprovadas**, com chave publicável e sessões Auth reais. Fixtures removidas e conferidas pelo runner.
+- `npm run rls:check -- cloud`: **245 verificações reais aprovadas** no projeto v2 `wvdqynbngsveqyzsphre`. Fixtures removidas e conferidas pelo runner.
+- A diferença de contagem é esperada: a corrida reatribuição/início pode exigir uma operação posterior do novo responsável, conforme a ordem válida observada.
+- Suite SQL `supabase/tests/tabelas-principais.sql` executada no PostgreSQL local com `ON_ERROR_STOP=1`: todos os blocos aprovados e `ROLLBACK` final, sem fixtures persistidas.
+- O smoke existente da API é executado pelo runner de RLS nos dois ambientes. Evidências anteriores do MVP-02 permanecem em seu relatório; estes resultados são execuções novas, não reapresentação das contagens antigas.
+
+Para repetir, usar os comandos `rls:check` existentes com `FIXIT_AUTH_SQL_COMMAND` apontando para helper privilegiado confiável que recebe SQL por stdin e devolve array JSON. Configuração de ambiente permanece em arquivos ignorados. O helper só prepara, induz falhas controladas e limpa fixtures; ações do produto passam pela Data API/RPC autenticada. Os helpers temporários utilizados não fazem parte do contrato versionado nem contêm credenciais neste relatório.
+
+A primeira tentativa local dentro do sandbox não acessou Docker e terminou antes de preparar contas; a execução autorizada seguinte passou, incluindo conferência de limpeza. O cloud usou o conector SQL por fila temporária para preparar/limpar as fixtures, sem chave administrativa no runner.
+
+## Limites
+
+Histórico obrigatório cobre operações da aplicação. Manutenção administrativa direta continua fora da geração automática de eventos, conforme a decisão da spec. Não foram criadas telas, não houve nova migration e não foi alterado o cartão separado de revisão de integração e segurança. Corridas exercitadas são evidência de comportamento, não prova formal de todos os escalonamentos possíveis. A conferência de datas permite até 60 segundos de diferença entre relógios do executor e banco.
+
+## Integração e revisão final
+
+Spec versionada em `def91f9`; testes e evidências em `ed93cfe`; merge sem conflitos em `e459c36`, na branch `integration/persistencia-historico`.
+
+`npm run verify` na raiz da integração aprovado: 11 testes, lint sem avisos, tipos e build. A primeira tentativa no sandbox falhou em dois testes ao abrir servidor local (`listen EPERM`); a execução autorizada fora do sandbox passou integralmente. `git diff --check` aprovado.
+
+Revisões independentes sobre `git diff main...e459c36`: Standards — zero achados; Spec — zero achados acionáveis. Não houve correção posterior de produto. A entrega permanece local nesta branch, sem push ou PR nesta execução.
+
+## Reconferência antes do PR — 2026-11-12
+
+Após autorização do usuário para publicar e mergear, `origin/main` foi atualizado e continua ancestral da integração. Nova execução de `npm run verify` aprovada (11 testes, lint, tipos e build); nova execução de `rls:check local` aprovada com 245 verificações e limpeza conferida. A variação de uma verificação decorre da corrida documentada acima. A execução cloud de 245 verificações registrada nesta entrega permanece válida para o mesmo código de testes e banco; não foi repetida nesta reconferência. Diff sem erros de whitespace. Repositório sem workflows GitHub Actions; não há resultado de CI remoto a declarar.
+</pre></details><details><summary>docs/specs/revisao-integracao-seguranca-validation.md</summary><p><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/revisao-integracao-seguranca-validation.md">Abrir fonte versionada</a></p><pre># Validação — integração e segurança do backend
+
+Cartão: https://trello.com/c/a6qjxn8S. [Spec](revisao-integracao-seguranca.md).
+
+Execução autorizada separadamente em 2026-11-13 via `implement-spec`, na branch `integration/revisao-integracao-seguranca`. Base do produto: `04d9028060d4a4c40f17cbc03959a99b56967c69`; spec inicial `4567168`.
+
+## Resultado e alterações
+
+O contrato existente fornece as operações obrigatórias para os dois frontends do MVP. A revisão acrescenta evidências de sessão no Next.js real e de consultas com filtros/paginação, corrige orientações desatualizadas do README e corrige a ordenação do histórico quando o relógio do banco recua. Não houve mudança de regra de negócio ou criação de tela.
+
+O novo `auth:check-next` cria um app temporário fora do produto, copia os módulos reais de `src/lib`, o proxy e a configuração Next.js, e executa build de produção e servidor em loopback com navegador Chromium real. Os handlers e páginas de teste são removidos ao terminar e nunca integram as rotas do produto. A ferramenta Playwright é fornecida pelo operador por caminho explícito; não há nova dependência de runtime.
+
+### Correções demonstradas pela revisão
+
+1. **Ordem do histórico:** a migration `20261114001621_monotonic_history_dates.sql` acrescenta um helper privado sem EXECUTE para os papéis da aplicação. As quatro implementações internas de RPC passam a gerar datas pelo maior valor entre relógio atual, criação da solicitação e último evento acrescido de um microssegundo. O lock existente por solicitação serializa esse cálculo. Preserva assinaturas, autorização, atomicidade e eventos anteriores; não altera dados existentes. Não há ordem global entre solicitações. Em caso de relógio recuado, a data lógica pode ficar à frente do horário de parede até ele alcançar o último evento. [`clock_timestamp()` retorna o relógio atual](https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT), e não substitui essa garantia de sequência.
+2. **Limpeza do runner Next:** uma falha ao fechar o navegador, terminar o servidor ou excluir o app podia impedir a limpeza SQL. As etapas locais agora têm falhas isoladas e espera limitada; a limpeza SQL é sempre tentada e falhas retornam saída não zero sem detalhes sensíveis. Três testes com falhas induzidas comprovam esse caminho.
+
+A regressão determinística posiciona somente o evento inicial de uma fixture uma hora à frente do relógio, por preparação SQL privilegiada e isolada; as alterações seguintes passam pelas RPCs públicas. Antes da correção, a asserção de ordem falhou e a limpeza passou; depois, a mesma asserção passou, com datas distintas em ordem estrita. O teste continua em `rls:check`. A investigação original também foi repetida após a correção: **100 sequências completas, nove eventos em cada uma, com snapshots após cada operação, todas aprovadas**, sem modificar o relógio do sistema ou enfraquecer a comparação do histórico.
+
+## Matriz de operações e evidências
+
+| Requisito/fluxo | Interface pública consumida pelas telas | Evidência nova |
+| --- | --- | --- |
+| Cadastro válido, inválido e duplicado | `createAuth(client).signUp` / Auth público | `auth:check` local/cloud: Cliente ativo, vínculo único, duplicidade, limites e senha do provedor |
+| Cadastro atômico e privilégios | Auth público; provisionamento administrativo existente | Falha real do perfil sem conta órfã, nova tentativa, metadados forjados sem privilégio e criação de Gestor/Manutentor com papel correto |
+| Login e contexto dos três papéis | `signIn` e `context` | `auth:check`: credenciais válidas/inválidas, perfil ausente/inativo; testes unitários complementam entradas inválidas e indisponibilidade |
+| Sessão no Next.js | Cliente browser, servidor, proxy, Route Handler e Server Component | `auth:check-next` local/cloud: cookie persistente, novo contexto do navegador, identidade compartilhada entre browser/servidor, renovação real com rotação de refresh token, logout nos dois sentidos e sessão revogada |
+| Isolamento de respostas | Requisições HTTP ao Next.js de produção | Respostas `private, no-store`; contexto anônimo permanece desconectado após outro usuário autenticar |
+| Listas, detalhes e filtros | Data API `solicitacoes.select`, filtros por status/ID, contagem e `range` | `rls:check`: Cliente próprias, Gestor todas, Manutentor atribuídas; ID conhecido de terceiro não revela dados; páginas e contagens não ultrapassam RLS |
+| Pessoas necessárias | Data API `profiles.select` | Próprio perfil, solicitante, responsável e autores históricos; seleção de Manutentores ativos; ausência de diretório geral |
+| Abertura | `abrir_solicitacao` | Cliente para si, campos válidos, Pendente e evento inicial; equipe/visitante e solicitante forjado recusados |
+| Triagem | `transicionar_solicitacao` | Gestor aprova/descarta Pendente; outras combinações recusadas |
+| Prioridade e atribuição | `organizar_solicitacao` | Par completo, valores válidos, remoção somente quando permitida, responsável ativo, reatribuição e perda de acesso do anterior |
+| Atendimento | `transicionar_solicitacao` | Responsável atual inicia/conclui, pré-condições obrigatórias, nenhum retorno/reabertura ou mutação terminal |
+| Histórico e observações | `historico.select` e `adicionar_observacao` | Histórico completo autorizado, ordenação por data/ID, nove eventos com payload/autoria/data, observações e referências antigas preservadas; edição/exclusão recusadas |
+| Integridade e concorrência | Mesmas RPCs autenticadas | Rollback ao falhar evento de status ou segundo evento de organização, ausência de evento em operação sem diferença, corridas reatribuição/início e conclusão/observação |
+| Segurança contra chamadas diretas | Auth, Data API e RPC com chave publicável | Visitante, perfis ausentes/inativos, DML direto, schema privado, papéis/metadados/autor/data forjados e ações incompatíveis recusados |
+
+`auth:check` e `rls:check` usam o Auth real; SQL privilegiado prepara/confere/limpa fixtures e induz falhas controladas. O smoke `db:check-api` é executado dentro da suite RLS com token real, não com chave administrativa. A suite SQL de integridade é complementar.
+
+## Reconciliação com os cartões de frontend
+
+Foram conferidos os cartões atuais nas listas Sprint Final, distinguindo-os dos registros históricos. Cadastro/login, abertura/lista/detalhe do Cliente, listas/filtro da gestão, aprovação/descarte, prioridade/atribuição e atendimento/observações possuem interfaces no contrato atual.
+
+Os cartões de formulário/lista do Cliente ainda mencionam categoria. A decisão posterior em [tabelas-principais.md](tabelas-principais.md), seção Conteúdo da solicitação, exclui categoria; a revisão preserva essa regra conforme a entrevista. “Assunto” nas telas corresponde a `titulo`. Não criar campo ou requisito de categoria a partir desse checklist anterior. Responsividade, confirmações visuais, estado vazio e atualização da apresentação continuam nos cartões de frontend; o backend retorna as listas/erros necessários. Patrimônio continua opcional.
+
+## Revisão de migrations, código e estado efetivo
+
+Local e cloud possuem as cinco versões `20261110224700`, `20261111201148`, `20261111231601`, `20261112203635` e `20261114001621`. A última foi aplicada pelo conector no cloud; o arquivo criado pelo CLI foi renomeado para essa versão efetivamente registrada e aplicado pelo CLI local após reverter a iteração de teste. Leitura dos catálogos confirmou:
+
+- As três tabelas públicas têm RLS habilitada; `anon` não tem SELECT e `authenticated` tem SELECT, sem INSERT/UPDATE/DELETE/TRUNCATE direto.
+- As três políticas de leitura são para `authenticated` e consultam os helpers de visibilidade próprios. Não há política pública permissiva de escrita.
+- As quatro RPCs públicas são `security invoker`, executáveis somente por `authenticated`. `setup_healthcheck` é a exceção pública intencional: devolve apenas o marcador técnico, sem ler dados do produto.
+- Implementações privilegiadas ficam em `private`, com `search_path` vazio, permissões explícitas e autorização por perfil atual no banco. Helpers exclusivos de trigger/operação não têm EXECUTE para os papéis comuns. `anon` não tem USAGE em `private`; nenhum papel comum tem CREATE em `public`/`private`.
+- Não há views públicas que contornem RLS. Clientes usam chave publicável, configuração rejeita chave administrativa antes de gerar bundle, cliente servidor é `server-only`, identidade vem de Auth validado e papel/atividade vêm de `profiles`, sem autorização por metadados editáveis.
+- RPCs bloqueiam solicitação e revalidam autorização; inativação do operador conflita com lock compartilhado do perfil; evento e alteração são transacionais. Manutenção SQL administrativa permanece fora dessa geração automática de eventos, conforme o contrato aprovado.
+
+As definições efetivas foram comparadas por agregação ordenada de `pg_get_functiondef`, `pg_policies`, `pg_get_constraintdef` e `pg_get_triggerdef`, nos schemas da aplicação (e trigger Auth próprio), com fingerprints iguais em local e cloud:
+
+| Grupo | MD5 da definição agregada |
+| --- | --- |
+| Funções | `3e449a3f17daf518ac222a2b4b533664` |
+| Políticas | `7cef1a9cafd32f4f3830fc1465eff806` |
+| Constraints | `ff4b4dd81b7d758b6fa5f9abf48c027a` |
+| Triggers | `b68dcca09000fab2daf9fcf316698c3e` |
+
+Isso detecta divergência entre esses objetos, não substitui testes de comportamento nem cobre toda configuração da plataforma. Constraints temporárias das fixtures são excluídas da comparação. O advisor de segurança cloud retornou lista vazia. As referências consultadas incluem [SSR e cookies](https://supabase.com/docs/guides/auth/server-side/creating-a-client), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), changelog atual do Supabase e documentação instalada de Next.js 16.4.2.
+
+`npm audit --omit=dev` retornou zero vulnerabilidades conhecidas nas dependências de produção. A auditoria completa apontou sete entradas moderadas da mesma cadeia de desenvolvimento, originadas em `minimatch` 10.2.6, usado pelo parser TypeScript do ESLint: [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249), amplificação de glob com potencial de negação de serviço. Não foi demonstrado caminho a partir de requisições do produto; a aplicação não aceita globs para o linter. Registrado como manutenção das ferramentas de desenvolvimento, sem atualização automática da stack fixada nem declaração de que o risco inexiste em ferramentas que processem padrões não confiáveis.
+
+## Execuções novas e reprodução
+
+- `auth:check local` e `auth:check cloud`: **32 verificações por ambiente**, com limpeza confirmada.
+- `auth:check-next local` e `auth:check-next cloud`: **25 verificações por ambiente**, app temporário removido e fixtures conferidas.
+- `rls:check local` e `rls:check cloud`: **277 verificações por ambiente** na cobertura ampliada inicial, limpeza confirmada. A versão final inclui também paginação descendente (mais recentes primeiro): **285 verificações locais** e **287 cloud** aprovadas, com limpeza. A variação decorre da ordem válida das operações concorrentes, que pode exigir um início posterior pelo novo responsável.
+- Após a correção do relógio e inclusão da regressão: **295 verificações RLS locais** aprovadas, limpeza confirmada; o resultado cloud posterior à migration é registrado na revisão final abaixo. Os números anteriores representam execuções anteriores à correção.
+- Suite `supabase/tests/tabelas-principais.sql` local com `ON_ERROR_STOP=1`: aprovada, encerrada por `ROLLBACK`.
+
+Executar os comandos com Node 24.18.0/npm 11.16.0 e os arquivos ignorados `.env.supabase.local`/`.env.supabase.cloud`. Ver o README para `FIXIT_AUTH_SQL_COMMAND`, chave administrativa restrita ao runner Auth e caminhos de Playwright/navegador para o runner Next. Nenhuma credencial pertence a este relatório. O bridge SQL cloud é mecanismo temporário de preparação/limpeza pelo conector, não endpoint do aplicativo.
+
+## Limites e ocorrências da execução
+
+- A reabertura é comprovada por novo contexto Chromium restaurando cookies persistidos; não depende de manter o cliente em memória. A renovação antecipa o vencimento armazenado no cookie, preservando JWT assinado/refresh token real; não espera uma hora de expiração natural. Revogação definitiva é testada antes da tentativa de renovação.
+- Logout local remove cookies e a capacidade de renovação da sessão atual; não promete invalidar instantaneamente todos os JWTs já emitidos. Outro dispositivo permanece autenticado conforme o contrato.
+- O serviço de agentes reiniciou durante testes cloud. Os processos terminaram e a ausência de fixtures foi conferida; como o stdout foi perdido, RLS e Next cloud foram executados novamente com logs privados em arquivo. Os números apresentados acima vêm das execuções novas com resultado disponível.
+- Uma tentativa local do executor RLS falhou na comparação da ordem do histórico antes dos novos testes de consulta. O diagnóstico inicial se perdeu no reinício. A revisão independente exigiu investigação direcionada: um probe de RPCs sequenciais com snapshots por operação reproduziu a falha na 22ª sequência. A observação foi persistida em `2026-11-14T00:13:04.433441Z`, mas o início do atendimento seguinte veio com `2026-11-14T00:13:04.301025Z`, antes até da abertura em `.415684Z`. O tempo monotônico do executor avançou e o payload/autoria correspondeu às chamadas. Isso distingue recuo do relógio do banco de empate de timestamps, expectativa incorreta ou evento de outra fixture. A correção e a regressão estão descritas acima; não se atribuiu a causa ao relógio antes dessa reprodução.
+- O primeiro `verify` no worktree usou symlink de `node_modules` externo, e Turbopack recusou a resolução fora da raiz. Esse arranjo de teste foi substituído por instalação própria, sem alterar configuração do produto.
+- Não foram implementadas nem aceitas as telas finais. Não há declaração de prova formal de segurança ou de todos os escalonamentos concorrentes possíveis.
+
+## Revisão final
+
+Primeira revisão independente: Standards — um P2 na limpeza do runner; Spec — um P2 na ordenação do histórico sem diagnóstico. Ambos foram tratados no commit `78283bb`, integrado sem conflitos em `b04adec`: falhas locais não interrompem a tentativa de limpeza SQL e a ordem do histórico agora é protegida contra recuo do relógio, com regressão demonstrada.
+
+Após a migration: **295 verificações RLS em local e 295 em cloud**, **25 verificações Next.js em cada ambiente**, todas com limpeza conferida. A suite SQL local foi repetida com rollback e passou. `npm run verify` no worktree final e na integração passou com **14 testes, lint, tipos e build**. Advisors cloud novamente sem achados. Catálogos local/cloud coincidem com os fingerprints acima. Contas temporárias e constraints de falha não restaram em nenhum ambiente; a chave administrativa temporária e seu receptor local foram removidos/encerrados.
+
+Os testes de Auth (32 por ambiente) foram executados nesta entrega sobre os mesmos módulos de autenticação, que não foram alterados pela correção de datas. A suite RLS posterior à migration entra novamente pelo Auth público real; as duas suites de sessão também foram repetidas após a correção do runner.
+
+Segunda revisão independente sobre `main...9fa1534`: **Standards — zero achados acionáveis; Spec — zero achados pendentes**. Ambos os P2 anteriores foram conferidos como resolvidos, sem novos achados. `git diff --check` passou. Entrega versionada na branch local de integração, sem push ou PR; isso não altera o aceite pendente das telas finais. O aviso de dependência de desenvolvimento registrado acima não foi apresentado como vulnerabilidade do backend em produção.
+</pre></details></section><p>Preparado a partir de código e documentos do FixIt v2. Não foram alterados código de produto, listas ou responsáveis do Trello.</p></main></html>
