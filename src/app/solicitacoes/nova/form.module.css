@@ -1,0 +1,164 @@
+
+.form {
+  display: grid;
+  gap: 20px;
+
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+
+  padding: 28px;
+  margin-top: 24px;
+
+  box-shadow: 0 4px 18px #213b5c06;
+}
+
+.form fieldset {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.form legend {
+  font-size: 16px;
+  font-weight: 700;
+  color: #18253a;
+  margin-bottom: 16px;
+}
+
+.form label {
+  display: block;
+  margin-bottom: 7px;
+
+  color: #41516a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.form :is(textarea, select, input[type="search"]) {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+
+  border: 1px solid #dbe3ed;
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: #24344a;
+  font: inherit;
+  font-size: 14px;
+}
+
+.form textarea {
+  resize: vertical;
+  min-height: 45px;
+}
+
+.form textarea:focus,
+.form select:focus,
+.form input:focus {
+  border-color: #358ad8;
+  outline: 3px solid #dbeeff;
+}
+
+.form button {
+  min-height: 42px;
+  padding: 10px 16px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: #1677dc;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.form button:hover:not(:disabled) {
+  background: #1266be;
+}
+
+.form button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.form a {
+  color: #176fca;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.form a:hover {
+  text-decoration: underline;
+}
+
+.form :is(textarea, input, select, button, a):focus-visible {
+  outline: 3px solid #358ad8;
+  outline-offset: 3px;
+}
+
+.error {
+  display: block;
+  color: #b73939;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.results {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+
+.results li {
+  display: grid;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.dialog {
+  max-width: min(32rem, calc(100vw - 2rem));
+  border: 1px solid #dbe3ed;
+  border-radius: 14px;
+  padding: 24px;
+  color: #24344a;
+}
+
+.dialog::backdrop {
+  background: #172b3580;
+}
+
+.dialog button {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+
+  border: 0;
+  border-radius: 9px;
+  background: #1677dc;
+  color: white;
+
+  font: inherit;
+  cursor: pointer;
+}
+
+.dialog button:focus-visible {
+  outline: 3px solid #358ad8;
+  outline-offset: 3px;
+}
+
+@media (max-width: 650px) {
+  .form {
+    padding: 18px;
+    gap: 16px;
+  }
+}

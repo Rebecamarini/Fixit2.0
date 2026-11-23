@@ -1,0 +1,190 @@
+.card {
+  padding: 22px;
+  min-width: 0;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px #213b5c06;
+}
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 19px;
+}
+
+.cabecalho h2 {
+  margin: 0;
+  color: #18253a;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.verTodos,
+.detalhes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid #d8e7f6;
+  border-radius: 8px;
+  color: #236fae;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.detalhes {
+  border: 0;
+  padding: 0;
+  color: #176fca;
+  background: transparent;
+}
+
+.verTodos:hover,
+.detalhes:hover {
+  background: #dbeafe;
+  border-color: #a8caed;
+}
+
+.rolagem {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.rolagem:focus-visible {
+  outline: 3px solid #236fae;
+  outline-offset: -3px;
+}
+
+.tabela {
+  width: 100%;
+  min-width: 762px;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+  color: #33445c;
+}
+
+.tabela thead {
+  background: #f9fbfd;
+  color: #8491a3;
+}
+
+.tabela th,
+.tabela td {
+  padding: 16px 12px;
+  border-top: 1px solid #edf1f5;
+  vertical-align: middle;
+}
+
+.tabela thead th {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tabela tbody tr:hover {
+  background: #fafcff;
+}
+
+.identificador {
+  color: #33445c;
+  font-weight: 600;
+}
+
+.assunto {
+  display: block;
+  min-width: 145px;
+  color: #18253a;
+  font-weight: 600;
+}
+
+.local {
+  display: block;
+  margin-top: 2px;
+  color: #718199;
+  font-size: 13px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pendente {
+  color: #936217;
+  background: #fff3d8;
+}
+
+.aprovada {
+  color: #6d38a1;
+  background: #f0e5ff;
+}
+
+.descartada {
+  color: #ae3030;
+  background: #ffe4e4;
+}
+
+.emAtendimento {
+  color: #196aa6;
+  background: #dfefff;
+}
+
+.concluida {
+  color: #18724b;
+  background: #e1f6eb;
+}
+
+.prioridade,
+.tabela time {
+  white-space: nowrap;
+}
+
+.tabela .vazio {
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.vazio strong {
+  color: #18253a;
+}
+
+.vazio p {
+  margin: 8px 0 0;
+}
+
+.somenteLeitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 650px) {
+  .card {
+    padding: 16px;
+  }
+
+  .cabecalho h2 {
+    font-size: 16px;
+  }
+}

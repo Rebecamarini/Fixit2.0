@@ -1,0 +1,161 @@
+.voltar {
+  align-self: flex-start;
+  color: #176fca;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.voltar:hover {
+  text-decoration: underline;
+}
+
+.card {
+  padding: 24px;
+  border: 1px solid #e5ebf2;
+  border-radius: 14px;
+  background: #fff;
+  color: #33445c;
+  box-shadow: 0 4px 18px #18253a04;
+  overflow-wrap: anywhere;
+}
+
+.cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.cabecalho h2 {
+  margin: 0;
+  color: #18253a;
+  font-size: 19px;
+}
+
+.cabecalho p {
+  margin: 6px 0 0;
+  color: #718199;
+  font-size: 13px;
+}
+
+.cabecalho .numero {
+  margin: 0 0 6px;
+  color: #176fca;
+  font-weight: 600;
+}
+
+.status {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pendente { color: #936217; background: #fff3d8; }
+.aprovada { color: #6d38a1; background: #f0e5ff; }
+.emAtendimento { color: #196aa6; background: #dfefff; }
+.concluida { color: #18724b; background: #e1f6eb; }
+.descartada { color: #ae3030; background: #ffe4e4; }
+
+.informacoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin: 24px 0;
+  padding-top: 24px;
+  border-top: 1px solid #edf1f5;
+}
+
+.informacoes dt,
+.descricao h3 {
+  margin: 0 0 6px;
+  color: #62748c;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.informacoes dd {
+  margin: 0;
+  color: #18253a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.linhaInteira {
+  grid-column: 1 / -1;
+}
+
+.descricao {
+  padding-top: 20px;
+  border-top: 1px solid #edf1f5;
+}
+
+.descricao p,
+.historico p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.historico {
+  margin: 24px 0 0;
+  padding: 0 0 0 20px;
+  list-style: none;
+}
+
+.historico li {
+  position: relative;
+  padding: 0 0 24px 22px;
+  border-left: 2px solid #e5ebf2;
+}
+
+.historico li:last-child {
+  padding-bottom: 0;
+  border-color: transparent;
+}
+
+.historico li::before {
+  position: absolute;
+  top: 3px;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #1677dc;
+  content: "";
+}
+
+.eventoCabecalho {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+}
+
+.eventoCabecalho h3 {
+  margin: 0;
+  color: #18253a;
+  font-size: 14px;
+}
+
+.eventoCabecalho time,
+.historico .autor {
+  color: #62748c;
+  font-size: 12px;
+}
+
+.historico .autor {
+  margin: 4px 0 6px;
+}
+
+@media (max-width: 650px) {
+  .card { padding: 18px; }
+  .informacoes { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .historico { padding-left: 6px; }
+}
+
+.descricao p, .historico p { white-space: pre-wrap; }
