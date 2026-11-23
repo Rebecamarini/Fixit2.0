@@ -23,11 +23,12 @@ export default async function PaginaLista({ searchParams }: Props) {
   return (
     <>
       <h1>{perfil.papel === "gestor" ? "Todas as solicitações" : "Minhas atribuições"}</h1>
+      <p className={estilos.subtitulo}>{perfil.papel === "gestor" ? "Organize e acompanhe as solicitações de manutenção." : "Acompanhe as solicitações atribuídas a você."}</p>
 
-      <nav className={estilos.filtros}>
-        <Link href="/painel/solicitacoes" className={!status ? estilos.ativo : ""}>Todos</Link>
+      <nav className={estilos.filtros} aria-label="Filtrar solicitações por status">
+        <Link href="/painel/solicitacoes" className={!status ? estilos.ativo : ""} aria-current={!status ? "page" : undefined}>Todos</Link>
         {LISTA_STATUS.map(s => (
-          <Link key={s} href={`?status=${s}`} className={status === s ? estilos.ativo : ""}>
+          <Link key={s} href={`?status=${s}`} className={status === s ? estilos.ativo : ""} aria-current={status === s ? "page" : undefined}>
             {NOME_STATUS[s]}
           </Link>
         ))}
@@ -36,8 +37,9 @@ export default async function PaginaLista({ searchParams }: Props) {
       {solicitacoes.length === 0 ? (
         <p className={estilos.vazio}>Nenhuma solicitação encontrada.</p>
       ) : (
-        <div className={estilos.tabelaRolagem}>
+        <div className={estilos.tabelaRolagem} role="region" aria-label="Tabela de solicitações" tabIndex={0}>
           <table className={estilos.tabela}>
+            <caption className={estilos.somenteLeitor}>{perfil.papel === "gestor" ? "Todas as solicitações" : "Minhas atribuições"}</caption>
             <thead>
               <tr>
                 <th>Nº</th>
@@ -66,11 +68,11 @@ export default async function PaginaLista({ searchParams }: Props) {
         </div>
       )}
 
-      <p className={estilos.paginacao}>
+      <nav className={estilos.paginacao} aria-label="Paginação das solicitações">
         {pagina > 1 && <Link href={link(pagina - 1)}>← Anterior</Link>}
         <span>Página {pagina} de {totalPaginas} ({total} no total)</span>
         {pagina < totalPaginas && <Link href={link(pagina + 1)}>Próxima →</Link>}
-      </p>
+      </nav>
     </>
   );
 }
