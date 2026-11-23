@@ -34,7 +34,7 @@ export default async function MinhasSolicitacoes({ searchParams }: { searchParam
     <div className={layout.boasVindas}><div><h1>Minhas solicitações</h1><p>Consulte e acompanhe seus atendimentos.</p></div><Link className={layout.novoChamado} href="/solicitacoes/nova">＋ Nova solicitação</Link></div>
     <section className={layout.indicadores} aria-label="Resumo das minhas solicitações">{indicadores.map(item => <Cards key={item.titulo} {...item} />)}</section>
     <TabelaChamados chamados={linhas} variante="todos">
-      <form className={styles.filtros} action="/solicitacoes">
+      <form key={`${busca}:${estado}`} className={styles.filtros} action="/solicitacoes">
         <div className={styles.busca}><label htmlFor="busca">Pesquisar solicitações</label><input id="busca" name="busca" type="search" defaultValue={busca} placeholder="Número, título ou localização" /></div>
         <div className={styles.status}><label htmlFor="estado">Status</label><select id="estado" name="estado" defaultValue={estado}><option value="">Todos os status</option>{LISTA_STATUS.map(valor => <option key={valor} value={valor}>{NOME_STATUS[valor]}</option>)}</select></div>
         <button className={layout.novoChamado}>Pesquisar</button><Link href="/solicitacoes">Limpar filtros</Link>
