@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatarData } from "../../lib/painel/regras";
 import type { ReactNode } from "react";
 import styles from "./TabelaChamados.module.css";
 
@@ -27,10 +28,6 @@ const classesStatus: Record<Chamado["status"], string> = {
   "Em atendimento": styles.emAtendimento,
   Concluída: styles.concluida,
 };
-
-function formatarData(data: string) {
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(data));
-}
 
 function LinhaChamado({ chamado, baseHref }: { chamado: Chamado; baseHref: string }) {
   return (
