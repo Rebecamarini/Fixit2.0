@@ -1,6 +1,10 @@
 # Unificação visual da equipe e navegação do Cliente
 
-Publicada no [cartão da spec no Trello](https://trello.com/c/e5pWR9IN), em Pronto para Implementação, com etiqueta `ready-for-agent`. Implementação não iniciada.
+Publicada no [cartão da spec no Trello](https://trello.com/c/e5pWR9IN), originalmente em Pronto para Implementação, com etiqueta `ready-for-agent`. Implementação concluída e validada; publicação autorizada pelo usuário em 2026-11-23. Evidências no documento de validação desta spec.
+
+Implementação autorizada pelo usuário em 2026-11-23 via implement-spec, após a entrevista.
+
+Grafo da implementação: UI-01 https://trello.com/c/27asIuSu/102-ui-01-unificar-acompanhamento-do-cliente, UI-02 https://trello.com/c/AEpXGiUh/103-ui-02-padronizar-%C3%A1rea-da-equipe-na-identidade-azul independentes; UI-03 https://trello.com/c/DaTkfL9c/104-ui-03-validar-e-revisar-unifica%C3%A7%C3%A3o-visual-integrada depende de ambas. Branch feat/unificacao-visual-navegacao.
 
 ## Problem Statement
 
@@ -98,4 +102,4 @@ Referências relacionadas, preservadas como histórico da entrega anterior:
 - [FRONT — Estruturar painel administrativo](https://trello.com/c/t8JizGSr).
 - [MVP-05 — Listar e filtrar solicitações para gestão](https://trello.com/c/R0fPjReQ).
 
-Esta spec descreve o ajuste transversal novo e não duplica a implementação original desses cartões. A etiqueta ready-for-agent indica especificação pronta para execução futura; a implementação depende de pedido separado, conforme as instruções do projeto para entrevistas de grill.
+Esta spec descreve o ajuste transversal novo e não duplica a implementação original desses cartões. A etiqueta ready-for-agent indicava especificação pronta para execução futura; o pedido separado para implementar foi recebido após a entrevista.

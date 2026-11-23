@@ -41,11 +41,11 @@
 
 /* Status e prioridade mantêm cores semânticas distintas. */
 .selo { display: inline-block; padding: 5px 9px; border-radius: 7px; font-size: 11px; font-weight: 700; vertical-align: middle; white-space: nowrap; line-height: 1.4; }
-.pendente { color: #916b11; background: #fff3d6; }
-.aprovada { color: #2469a0; background: #dfeeff; }
-.em_atendimento { color: #7952a1; background: #ece3ff; }
-.concluida { color: #2e8251; background: #dcf3e5; }
-.descartada { color: #596579; background: #e9edf3; }
+.pendente { color: #936217; background: #fff3d8; }
+.aprovada { color: #6d38a1; background: #f0e5ff; }
+.em_atendimento { color: #196aa6; background: #dfefff; }
+.concluida { color: #18724b; background: #e1f6eb; }
+.descartada { color: #ae3030; background: #ffe4e4; }
 .baixa { color: #376a4d; background: #e6f0ea; }
 .media { color: #916b11; background: #fff3d6; }
 .alta { color: #a33a2b; background: #ffe1dd; }
@@ -76,6 +76,9 @@
 .cartao p { margin: 8px 0; font-size: 13px; overflow-wrap: anywhere; white-space: pre-wrap; }
 .cartao form { margin-bottom: 16px; }
 .cartao form:last-child { margin-bottom: 0; }
+.estado { width: 100%; max-width: 40rem; color: #18253a; }
+.estado h1 { margin: 0 0 16px; font-size: 25px; letter-spacing: -.04em; }
+.estado .botao { margin-top: 12px; }
 .historico { margin: 0; padding-left: 20px; color: #526985; }
 .historico li { margin-bottom: 20px; padding-left: 4px; }
 .historico li:last-child { margin-bottom: 0; }
