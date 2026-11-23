@@ -5,19 +5,32 @@ import { getPublicSupabaseConfig } from "./lib/supabase/config";
 export async function proxy(request: NextRequest) {
   const { url, publishableKey } = getPublicSupabaseConfig();
   let response = NextResponse.next({ request });
+
   const client = createServerClient(url, publishableKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll(values, headers) {
-        values.forEach(({ name, value }) => request.cookies.set(name, value));
+        for (const { name, value } of values) {
+          request.cookies.set(name, value);
+        }
+
         response = NextResponse.next({ request });
-        values.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-        Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value));
+
+        for (const { name, value, options } of values) {
+          response.cookies.set(name, value, options);
+        }
+
+        for (const [name, value] of Object.entries(headers)) {
+          response.headers.set(name, value);
+        }
       },
     },
   });
+
+  // Renova a sessão e propaga os cookies antes de renderizar a página.
   await client.auth.getUser();
   response.headers.set("Cache-Control", "private, no-store");
+
   return response;
 }
 

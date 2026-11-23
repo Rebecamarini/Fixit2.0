@@ -1,0 +1,492 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>João — Guia de estudo do backend FixIt v2</title><style>*{box-sizing:border-box}a,td,th,summary{overflow-wrap:anywhere}table{table-layout:fixed}@media(max-width:600px){main{padding:12px}section{padding:18px}td,th{padding:5px;font-size:12px}}body{margin:0;background:#eef2f6;color:#172638;font:16px/1.65 system-ui,sans-serif}header{background:#112c43;color:white;padding:55px max(6vw,24px)}main{max-width:1100px;margin:auto;padding:28px}h1{font-size:clamp(30px,5vw,52px);line-height:1.12}h2{color:#123c59;margin-top:0}h3{margin-bottom:8px}section{background:white;border:1px solid #d9e2eb;border-radius:14px;padding:30px;margin:24px 0;scroll-margin-top:20px}a{color:#006c91}header a{color:#9ce5ed}.tag{color:#8de2d2;font-weight:700}nav{display:flex;flex-wrap:wrap;gap:12px}nav a{padding:7px 12px;background:#e6f1f4;border-radius:6px}table{border-collapse:collapse;width:100%}td,th{text-align:left;vertical-align:top;border-bottom:1px solid #dce3e9;padding:12px}details{border:1px solid #dce3e9;border-radius:8px;padding:14px;margin:12px 0}summary{cursor:pointer;font-weight:650}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 ui-monospace,monospace;background:#f3f6f8;padding:20px;max-height:540px;overflow:auto}.note{border-left:4px solid #dc9d2d;padding:14px;background:#fff7e5}button{padding:10px 18px;cursor:pointer;border:0;border-radius:6px;background:#087c83;color:white}li{margin:8px 0}@media print{body{background:white;font-size:11pt}section{break-inside:auto;border:0;padding:10px}nav,button{display:none}pre{max-height:none}header{background:white;color:#172638;padding:10px}a{color:inherit}details{break-inside:avoid}} .flow{display:flex;flex-wrap:wrap;gap:10px}.flow span{background:#e6f1f4;padding:12px;border-radius:8px}.exercise{background:#edf8f4;padding:18px;border-radius:8px}code{overflow-wrap:anywhere}textarea{width:100%;min-height:110px;border:1px solid #ccd8df;padding:12px;font:inherit} @media print{textarea{display:none}}</style><header><div class="tag">FIXIT V2 • GUIA DE ESTUDO • JOÃO</div><h1>Entenda o backend que sua frente entregou</h1><p>Do primeiro acesso ao histórico transacional: conceitos, leitura do código, exercícios e 31 respostas comentadas.</p><p>Base: main db84b3a • preparado em 20/11/2026 • resultados de validação históricos, sem nova execução de suites.</p></header><main><button onclick="window.print()">Imprimir / salvar PDF</button> <button onclick="document.querySelectorAll('details').forEach(d=>d.open=true)">Abrir respostas e fontes</button><nav><a href="#m1">1. Setup Supabase</a><a href="#m2">2. Tabelas principais</a><a href="#m3">3. Autenticação</a><a href="#m4">4. RLS e operações autorizadas</a><a href="#m5">5. Persistência e histórico</a><a href="#m6">6. Revisão de integração e segurança</a><a href="#simulado">Simulado</a><a href="#glossario">Glossário</a></nav><section><h2>O objetivo é conseguir explicar e demonstrar</h2><p>Estude cada módulo com o código aberto. Primeiro conte o problema em suas palavras; depois acompanhe uma operação entre navegador, Auth, API e banco. Por fim, tente prever uma falha e confira qual proteção responde por ela. A resposta ganha propriedade quando conecta uma decisão a uma linha de código e a uma evidência.</p><p class="note">Este guia descreve entregas sob responsabilidade da frente do João, com execução assistida registrada nos relatórios. Ele não prova autoria manual exclusiva. Ao apresentar, diferencie o que você escreveu, acompanhou, revisou ou estudou. Explique honestamente sua participação e demonstre o entendimento atual.</p><h3>Sequência sugerida</h3><ol><li><strong>Fundação:</strong> módulos 1 e 2. Desenhe as três tabelas e explique ambiente, chaves e integridade.</li><li><strong>Identidade e acesso:</strong> módulos 3 e 4. Explique sessão, perfil, cookies, RLS e escrita por RPC.</li><li><strong>Consistência:</strong> módulo 5. Reconstrua uma transação e duas operações concorrentes.</li><li><strong>Evidência:</strong> módulo 6. Explique o defeito real e os limites dos testes.</li><li><strong>Ensaiar:</strong> responda ao simulado sem abrir o gabarito; volte ao código nos pontos de dúvida.</li></ol><h3>Visão do sistema</h3><div class="flow"><span>Browser / Next.js</span><span>→ Auth e sessão</span><span>→ SELECT + RLS</span><span>ou RPC + autorização</span><span>→ PostgreSQL + histórico</span></div><p>Cliente abre e acompanha suas solicitações. Gestor faz triagem e organização. Manutentor atende o que está atualmente atribuído a ele. Somente Cliente abre para si; não há categoria no modelo aprovado da v2.</p></section><section id="m1"><h2>Módulo 1 • Setup Supabase</h2><p><a href="https://trello.com/c/cMgHVTuv">Tarefa de referência</a></p><h3>Entrega que você precisa saber defender</h3><p>Criou a base de conexão exclusiva da v2, separando desenvolvimento local e cloud e impedindo que uma chave administrativa entrasse no navegador.</p><h3>Entenda as três peças da infraestrutura</h3><p>Supabase reúne serviços, mas cada peça tem uma função. PostgreSQL armazena dados e executa constraints, políticas e funções. Auth verifica credenciais e mantém sessões. A Data API transforma chamadas HTTP do SDK em operações de banco. Next.js executa a aplicação, tanto no navegador quanto no servidor. Uma conexão bem-sucedida não prova que todas essas peças estão integradas corretamente.</p><h3>Ambientes e migrations</h3><p>Local e cloud são bancos distintos. A migration é um arquivo SQL versionado que descreve uma evolução do banco. Aplicar a mesma sequência de migrations ajuda a reproduzir a estrutura; não copia automaticamente os dados de um ambiente para outro. No FixIt v2 foi criado projeto próprio, sem importar credenciais ou funcionalidades da versão antiga. Os arquivos ignorados de ambiente escolhem URL e chave. Uma URL correta com uma chave de outro projeto ainda pode falhar: validar formato não valida a combinação no serviço.</p><h3>Chave publicável não é a senha de um usuário</h3><p>A chave publicável permite que um cliente alcance o projeto dentro das permissões públicas. O token de uma sessão identifica uma pessoa autenticada. RLS e RPCs decidem o que essa pessoa pode fazer. A chave administrativa tem poderes diferentes e não pode entrar no bundle público. Prefixo NEXT_PUBLIC indica valor que pode chegar ao navegador; por isso a configuração faz uma validação antes da compilação.</p><h3>Leia a configuração com intenção</h3><p>Em src/lib/supabase/config.ts, siga environment → URL → chave → retorno. Local exige loopback; cloud exige HTTPS fora de loopback. URL com credenciais, caminho ou parâmetros é recusada. A validação aceita sb_publishable_ e, somente local, anon legado. Reconhecer o formato não é verificar criptograficamente a chave; a conexão real confirma se ela funciona.</p><h3>Como raciocinar sobre o healthcheck</h3><p>setup_healthcheck é uma RPC pública intencional que devolve um marcador. Não lê tabelas de negócio. Se ela funciona e uma solicitação não aparece, investigue sessão, ambiente e autorização em vez de concluir que o banco caiu. Se ela falha, separe URL, rede, chave, disponibilidade e migration ausente antes de alterar políticas.</p><h3>Leitura orientada dos arquivos</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/lib/supabase/config.ts">src/lib/supabase/config.ts</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/lib/supabase/client.ts">src/lib/supabase/client.ts</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/lib/supabase/server.ts">src/lib/supabase/server.ts</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-supabase.mjs">scripts/check-supabase.mjs</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261110224700_setup_healthcheck.sql">supabase/migrations/20261110224700_setup_healthcheck.sql</a> — localize entrada, validação, efeito e tratamento de falha.</li></ul><p><strong>Resultados documentados:</strong> Conexão por SDK, Server Component e Safari confirmada nos dois ambientes em 10/11. Nove testes e build/lint/tipos aprovados nessa etapa. Sessão foi adicionada na etapa de autenticação; a ausência de sessão citada no relatório inicial é histórica. <a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/setup-supabase-validation.md">Conferir relatório</a>.</p><div class="exercise"><h3>Prática: Explique uma falha de configuração</h3><p>Imagine ambiente cloud com URL 127.0.0.1. Qual função rejeita? Depois imagine URL e chave válidas de projetos diferentes. Por que o primeiro caso é detectável localmente e o segundo exige resposta do serviço?</p><details><summary>Conferir o raciocínio</summary><p>Localize getSupabaseConfig e validateSupabasePublishableKey. Separe validação de formato, seleção de ambiente e teste de conexão.</p></details></div><h3>Uma forma de explicar em voz alta</h3><p>“O problema desta tarefa era… A solução ficou em… A entrada passa por… O banco garante… Conferimos isso com… O teste não demonstra…”</p><p>Complete com detalhes deste módulo. Se não conseguir explicar uma dessas frases, volte ao arquivo ou ao relatório antes de avançar.</p></section><section id="m2"><h2>Módulo 2 • Tabelas principais</h2><p><a href="https://trello.com/c/vrIpSvNe">Tarefa de referência</a></p><h3>Entrega que você precisa saber defender</h3><p>Modelou a identidade, a solicitação e seu histórico com integridade no PostgreSQL.</p><h3>Modelo de dados como contrato</h3><p>Uma tabela não é só um conjunto de campos. Ela define o que pode existir. profiles representa a pessoa no produto e referencia a conta de Auth. solicitacoes representa o pedido. historico representa acontecimentos imutáveis desse pedido. E-mail e senha ficam em Auth; perfil contém nome, papel, atividade e data. Essa separação evita misturar credencial com regra de negócio.</p><h3>Por que validar no banco</h3><p>TypeScript ajuda durante desenvolvimento, mas desaparece como barreira para quem faz uma requisição direta. A validação do formulário melhora a experiência; o banco protege dados de qualquer cliente. NOT NULL impede ausência; CHECK valida condições da linha; enum limita valores; FK exige que referências existam. Triggers acrescentam regras que precisam comparar outras linhas ou impedir mutações específicas.</p><h3>Identidade e referências</h3><p>A PK identifica uma linha. Uma FK liga linhas sem copiar toda a entidade. solicitante_id e responsavel_id apontam para profiles; historico aponta para solicitação e autor. O UUID é identidade interna, enquanto numero oferece referência humana. Uma sequência pode avançar em uma transação que depois falha; uma lacuna não prova perda de solicitação.</p><h3>Estado válido não é transição autorizada</h3><p>A restrição que exige prioridade e responsável em Em atendimento/Concluída verifica uma combinação armazenada. Ela não decide, sozinha, se um Cliente pode concluir uma solicitação. Essa segunda pergunta depende do ator, do estado anterior e da operação: pertence às RPCs. Conseguir separar integridade de autorização é essencial para explicar o desenho.</p><h3>Imutabilidade e preservação</h3><p>Papel é fixo no MVP. Histórico é somente acréscimo: corrigir observação significa adicionar outra. Desativação mantém autoria e atribuições anteriores, mas impede acesso e novas atribuições ao inativo. FKs restritivas bloqueiam exclusões que destruiriam o contexto. Um administrador ainda pode realizar manutenção explícita com poderes especiais; a aplicação não oferece esse caminho.</p><h3>Índices e limites</h3><p>Índice acelera buscas por chaves usadas nas consultas, com custo de armazenamento e escrita. Não substitui autorização nem validação. A migration indexa vínculos relevantes e ordenação do histórico. Limites acordados: nome 120, título 150, local 200, descrição e observação 5000. Categoria, anexos e setor não devem ser inventados a partir de documentos da versão antiga.</p><h3>Leitura orientada dos arquivos</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261111201148_tabelas_principais.sql">supabase/migrations/20261111201148_tabelas_principais.sql</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/tests/tabelas-principais.sql">supabase/tests/tabelas-principais.sql</a> — localize entrada, validação, efeito e tratamento de falha.</li></ul><p><strong>Resultados documentados:</strong> Migration 20261111201148 e suite SQL de integridade documentadas em local e cloud. Exclusões que rompem referências e edição/exclusão de histórico são recusadas. Desativação preserva vínculos. <a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/tabelas-principais-validation.md">Conferir relatório</a>.</p><div class="exercise"><h3>Prática: Desenhe o modelo sem consultar</h3><p>Desenhe profiles, solicitacoes e historico com suas FKs. Marque quais campos vêm da pessoa e quais vêm do banco. Explique por que apagar um perfil referenciado é bloqueado.</p><details><summary>Conferir o raciocínio</summary><p>Inclua vínculo profiles→auth.users, autor e referências históricas. UUID e número são diferentes; senha não fica em profiles.</p></details></div><h3>Uma forma de explicar em voz alta</h3><p>“O problema desta tarefa era… A solução ficou em… A entrada passa por… O banco garante… Conferimos isso com… O teste não demonstra…”</p><p>Complete com detalhes deste módulo. Se não conseguir explicar uma dessas frases, volte ao arquivo ou ao relatório antes de avançar.</p></section><section id="m3"><h2>Módulo 3 • Autenticação</h2><p><a href="https://trello.com/c/FfU6Vsm9">Tarefa de referência</a></p><h3>Entrega que você precisa saber defender</h3><p>Entregou cadastro, login, contexto autenticado, logout e provisão técnica da equipe.</p><h3>Autenticar e autorizar são perguntas diferentes</h3><p>Autenticar responde quem é a pessoa. Autorizar responde se essa pessoa pode acessar o produto, determinada linha e determinada ação agora. Um JWT válido não transforma um perfil inativo em operador autorizado. createAuth.context primeiro usa getUser para obter identidade validada e depois consulta profiles. O papel vem do banco.</p><h3>Cadastro atômico</h3><p>O wrapper aceita nome, e-mail e senha, rejeita propriedades extras e envia nome em options.data. O banco define o papel de Cliente e cria o perfil por trigger na inserção da conta Auth. Se o perfil falha dentro dessa transação, a conta não deve permanecer órfã. Duas chamadas independentes na aplicação — criar conta e depois criar perfil — teriam uma janela de inconsistência.</p><h3>Metadados são entrada, não autoridade</h3><p>Um cliente pode tentar chamar Auth diretamente e forjar metadados. Rejeitar papel no wrapper é útil, mas a proteção real precisa sobreviver a esse desvio. user_metadata é editável pelo usuário; o desenho não o usa para conceder privilégio. Gestor e Manutentor são provisionados pelo procedimento técnico, não por um seletor público.</p><h3>Cookies e renderização no servidor</h3><p>O navegador mantém cookies de sessão. O cliente browser conhece a sessão; o cliente server lê cookies da requisição. Cookies renovados precisam chegar ao processamento atual e à resposta para o navegador. O proxy faz essa ponte. Em Server Components a gravação pode não ser permitida; mutações de Auth devem ocorrer em contexto que possa escrever cookies, como Route Handler ou Server Action.</p><h3>Renovação e logout</h3><p>Access token tem duração limitada. Refresh token permite obter nova sessão e pode sofrer rotação. Logout com scope local encerra a sessão atual e sua renovação; não promete apagar instantaneamente a validade criptográfica de todo JWT já emitido nem sair de todos os dispositivos. A autorização por perfil atual no banco continua importante.</p><h3>Erros que a tela precisa distinguir</h3><p>invalid_input indica entrada recusada; invalid_credentials indica credenciais inválidas; not_authenticated indica ausência de sessão válida; unavailable agrupa indisponibilidade. profile_missing pode significar que RLS ocultou um perfil inativo. Não prometa que todo inativo retorna profile_inactive. O consumidor verifica ok antes de acessar user/profile.</p><h3>Por que private, no-store</h3><p>Resposta que depende da identidade não deve ser reaproveitada como conteúdo público compartilhado. O proxy define Cache-Control para impedir armazenamento desse conteúdo. Essa medida complementa a autorização e não cria autorização por si só. Testar dois contextos de navegador verifica se o contexto anônimo permanece separado do autenticado.</p><h3>Leitura orientada dos arquivos</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/lib/auth.ts">src/lib/auth.ts</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/proxy.ts">src/proxy.ts</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/src/lib/supabase/server.ts">src/lib/supabase/server.ts</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/provision-auth.mjs">scripts/provision-auth.mjs</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-auth.mjs">scripts/check-auth.mjs</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-next-auth.mjs">scripts/check-next-auth.mjs</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261111231601_mvp01_auth.sql">supabase/migrations/20261111231601_mvp01_auth.sql</a> — localize entrada, validação, efeito e tratamento de falha.</li></ul><p><strong>Resultados documentados:</strong> 32 verificações Auth por ambiente na revisão final. Sessão Next.js real: 25 por ambiente, com persistência, renovação, logout e isolamento. Não há tela de gestão de pessoas entregue por este cartão. <a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/mvp-01-autenticacao-validation.md">Conferir relatório</a>.</p><div class="exercise"><h3>Prática: Conte o caminho de uma sessão</h3><p>Descreva cadastro, perfil automático, login no browser, leitura no servidor, renovação e logout. Em cada passo diga quem lê ou escreve cookies.</p><details><summary>Conferir o raciocínio</summary><p>Mostre createAuth, cliente server e proxy. Não use o papel recebido do browser como fonte de autorização.</p></details></div><h3>Uma forma de explicar em voz alta</h3><p>“O problema desta tarefa era… A solução ficou em… A entrada passa por… O banco garante… Conferimos isso com… O teste não demonstra…”</p><p>Complete com detalhes deste módulo. Se não conseguir explicar uma dessas frases, volte ao arquivo ou ao relatório antes de avançar.</p></section><section id="m4"><h2>Módulo 4 • RLS e operações autorizadas</h2><p><a href="https://trello.com/c/aTmY7Xk2">Tarefa de referência</a></p><h3>Entrega que você precisa saber defender</h3><p>Implementou isolamento de dados por pessoa e papel e operações estreitas de escrita.</p><h3>RLS é um filtro do banco</h3><p>Row Level Security aplica políticas às linhas acessíveis. O filtro da tela serve para navegação; RLS limita o universo que a consulta pode enxergar. Assim, count, filtros e paginação devem operar sobre linhas visíveis. Saber o UUID de uma solicitação alheia não concede acesso.</p><h3>Matriz de leitura do FixIt</h3><p>Cliente vê solicitações próprias. Gestor vê todas. Manutentor vê as atualmente atribuídas. Histórico herda a visibilidade da solicitação, inclusive eventos anteriores à atribuição atual. Perfis são visíveis quando necessários para identificar pessoas relacionadas; Gestor também consulta Manutentores ativos para atribuir. Isso não abre um diretório geral de pessoas.</p><h3>Privilégio de tabela e política são camadas</h3><p>GRANT SELECT permite tentar ler a tabela; a política define quais linhas passam. As tabelas não permitem INSERT/UPDATE/DELETE direto à aplicação. Não se resolve um erro de gravação liberando DML geral: o contrato exige RPCs. Visitante não tem SELECT de negócio; sessão sem perfil ativo não obtém linhas.</p><h3>Por que existem duas camadas de função</h3><p>A RPC pública é security invoker. Ela encaminha uma operação delimitada à implementação privada security definer, que executa com os privilégios do dono da função. Essa capacidade é sensível: a função precisa revalidar auth.uid, papel, atividade, alvo e estado. Schema privado, nomes qualificados, search_path vazio e permissões explícitas reduzem a superfície disponível. Só estar em private não basta se houver privilégios indevidos.</p><h3>Autorização acompanha o estado atual</h3><p>Depois de reatribuir, o responsável anterior perde acesso nas próximas operações; dados que já foram entregues ao navegador não podem ser magicamente recolhidos. A RPC trava a solicitação e avalia o responsável atual. Isso impede decidir com uma responsabilidade que ficou desatualizada durante uma operação concorrente.</p><h3>Leitura negada e escrita negada têm formas diferentes</h3><p>Uma consulta autorizada sem linha visível pode retornar lista vazia. Uma RPC pode retornar 42501 para ação não autorizada. Não conclua que um ID não existe só porque veio vazio: também pode estar fora do acesso. Não revele detalhes adicionais para tentar distinguir essas situações na interface.</p><h3>Leitura orientada dos arquivos</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261112203635_mvp02_rls.sql">supabase/migrations/20261112203635_mvp02_rls.sql</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-rls.mjs">scripts/check-rls.mjs</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/mvp-02-integracao.md">docs/specs/mvp-02-integracao.md</a> — localize entrada, validação, efeito e tratamento de falha.</li></ul><p><strong>Resultados documentados:</strong> Migration 20261112203635. Matriz ampliada chegou a 295 verificações por ambiente na revisão final. Perfil ausente/inativo, visitante, manipulação de IDs e metadados, DML direto e acesso a funções privadas foram cobertos. <a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/mvp-02-rls-validation.md">Conferir relatório</a>.</p><div class="exercise"><h3>Prática: Monte uma tentativa de acesso indevido</h3><p>Cliente B sabe o UUID da solicitação de A e muda a URL da tela. Explique por que continua sem acesso. Depois ele tenta UPDATE direto. Onde a tentativa é barrada?</p><details><summary>Conferir o raciocínio</summary><p>Diferencie filtro RLS de privilégio DML. Depois explique como a RPC recusaria uma ação de papel errado.</p></details></div><h3>Uma forma de explicar em voz alta</h3><p>“O problema desta tarefa era… A solução ficou em… A entrada passa por… O banco garante… Conferimos isso com… O teste não demonstra…”</p><p>Complete com detalhes deste módulo. Se não conseguir explicar uma dessas frases, volte ao arquivo ou ao relatório antes de avançar.</p></section><section id="m5"><h2>Módulo 5 • Persistência e histórico</h2><p><a href="https://trello.com/c/5rZFakvy">Tarefa de referência</a></p><h3>Entrega que você precisa saber defender</h3><p>Validou o fluxo transacional de solicitações e a rastreabilidade de cada alteração.</p><h3>Uma RPC é uma operação de negócio</h3><p>Em vez de o navegador montar várias gravações, ele pede uma operação: abrir, transicionar, organizar ou observar. O servidor escolhe autoria, datas e efeitos. Uma chamada ao PostgreSQL executa no contexto transacional: se uma exceção interrompe a operação, suas alterações não devem ficar parcialmente persistidas.</p><h3>Siga uma abertura</h3><p>O Cliente envia título, descrição e local. O banco obtém o operador ativo a partir de auth.uid, confirma papel Cliente, insere solicitação para o próprio operador e grava abertura. O cliente não informa solicitante, autor ou data. Isso evita fabricar solicitações em nome de outra pessoa por parâmetros extras.</p><h3>Siga a triagem e o atendimento</h3><p>Gestor transforma Pendente em Aprovada ou Descartada. Em Aprovada, Gestor pode organizar prioridade e responsável. O responsável atual inicia atendimento e depois conclui; prioridade e responsável são obrigatórios nesses estados. Gestor não recebe automaticamente todas as ações do Manutentor. Terminal não reabre e não aceita nova observação.</p><h3>Par completo e comparação com null</h3><p>organizar_solicitacao recebe prioridade e responsável desejados, inclusive quando null. null remove o campo, respeitadas as restrições. IS DISTINCT FROM compara valores tratando null de forma definida: null e null não diferem, null e valor diferem. Só campos alterados geram eventos. Trocar os dois gera dois eventos na mesma transação.</p><h3>Atomicidade com um exemplo de falha</h3><p>Suponha que prioridade mude de baixa para alta e responsável de M1 para M2. O banco atualiza a solicitação, insere o evento de prioridade e falha ao inserir o evento de responsável. O correto é desfazer atualização e primeiro evento. O teste induz uma falha controlada no segundo evento e consulta o estado persistido depois; contar apenas um erro na resposta não provaria rollback.</p><h3>Locks e concorrência</h3><p>FOR UPDATE trava a linha da solicitação para que operações concorrentes esperem e decidam sobre o estado vigente. FOR SHARE no perfil coordena a operação com sua inativação. Não significa que o banco inteiro fica parado. Locks têm escopo e duração transacional. O cálculo de data também precisa estar dentro da mesma seção protegida para não usar um último evento obsoleto.</p><h3>Repetição depois de falha de rede</h3><p>O banco pode concluir e a resposta se perder. Repetir uma observação cria outro registro, pois não há chave de idempotência. Uma transição repetida pode ser recusada porque o estado já mudou. O consumidor deve reconsultar e decidir como informar a pessoa, separando falha de transporte de recusa de negócio.</p><h3>O que este cartão acrescentou de fato</h3><p>As operações principais já estavam implementadas na entrega de RLS. O cartão de persistência aprofundou sua validação e não precisou criar nova migration naquele momento. Ao relatar trabalho, diga o que foi implementado antes, o que foi validado aqui e qual correção veio depois. Não invente código novo para cada cartão.</p><h3>Leitura orientada dos arquivos</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261112203635_mvp02_rls.sql">supabase/migrations/20261112203635_mvp02_rls.sql</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-rls.mjs">scripts/check-rls.mjs</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/persistencia-historico.md">docs/specs/persistencia-historico.md</a> — localize entrada, validação, efeito e tratamento de falha.</li></ul><p><strong>Resultados documentados:</strong> Entrega integrada pelo PR #5. Evidências daquela etapa: 244 verificações locais e 245 cloud, variação por ordem concorrente válida; 11 testes no verify. Correção posterior de datas pertence à revisão final, não a esta entrega original. <a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/persistencia-historico-validation.md">Conferir relatório</a>.</p><div class="exercise"><h3>Prática: Simule duas operações simultâneas</h3><p>Gestor reatribui de M1 para M2 enquanto M1 tenta iniciar. Quais ordens de execução podem ocorrer? Depois provoque mentalmente falha no segundo evento de organização.</p><details><summary>Conferir o raciocínio</summary><p>Se o início obtém o lock e autoriza antes, pode concluir antes da reatribuição; se reatribuição vence, M1 já não é responsável ao decidir. Não pode haver decisão sobre estado antigo sem proteção. Falha de evento desfaz a operação.</p></details></div><h3>Uma forma de explicar em voz alta</h3><p>“O problema desta tarefa era… A solução ficou em… A entrada passa por… O banco garante… Conferimos isso com… O teste não demonstra…”</p><p>Complete com detalhes deste módulo. Se não conseguir explicar uma dessas frases, volte ao arquivo ou ao relatório antes de avançar.</p></section><section id="m6"><h2>Módulo 6 • Revisão de integração e segurança</h2><p><a href="https://trello.com/c/a6qjxn8S">Tarefa de referência</a></p><h3>Entrega que você precisa saber defender</h3><p>Conferiu o backend completo que as duas frentes visuais consumirão e corrigiu falhas encontradas.</p><h3>Teste por camada</h3><p>Teste unitário isola um comportamento pequeno. Teste de integração usa serviços reais e confere combinações. O runner RLS autentica pessoas reais e chama API/RPC; SQL privilegiado prepara e limpa fixtures, não faz a operação no lugar do usuário. O runner Next usa app temporário com os módulos reais, build de produção e Chromium. Cada camada responde a perguntas diferentes.</p><h3>O defeito de relógio</h3><p>A revisão observou evento posterior com horário anterior: recuo de 132,416 ms. O executor avançava em tempo monotônico e os dados batiam com as operações. Um probe reproduziu a falha. Ordenar por created_at e id não conserta um horário que voltou: o segundo critério só resolve empate, não uma inversão de data.</p><h3>Correção e seu limite</h3><p>proxima_data_historico calcula greatest(clock_timestamp(), criação da solicitação, último evento +1 microssegundo). O lock por solicitação serializa a leitura do último evento e a gravação seguinte. A ordem é estritamente crescente por solicitação nas RPCs. Datas podem ficar à frente do relógio físico após um recuo. Não há promessa de ordem global entre solicitações nem correção retroativa de dados antigos.</p><h3>Regressão determinística</h3><p>A preparação privilegiada posiciona apenas o evento inicial de uma fixture uma hora no futuro. As próximas operações continuam passando pelas RPCs públicas. Antes da correção o teste falha; depois passa. Isso reproduz o risco sem mudar relógio do sistema. Também foram registradas 100 sequências completas de nove eventos após a correção.</p><h3>Limpeza é parte da confiabilidade do teste</h3><p>Um runner pode falhar ao fechar navegador, servidor ou diretório temporário. Se isso impedir a limpeza SQL, deixa dados e sessões de teste. A correção isola falhas e sempre tenta a limpeza SQL, sinalizando saída não zero se algo falhar. Fixtures são dados controlados e identificáveis criados só para o teste; limpar significa conferir sua ausência, não presumir que um finally resolveu tudo.</p><h3>Evidência tem data e alcance</h3><p>Na revisão final constam 295 verificações RLS, 25 Next e 32 Auth por ambiente. Verify tinha 14 testes, lint, tipos e build. São resultados históricos de 10–14/11; não descrevem uma execução feita ao abrir este guia. Quantidade não prova cobertura completa. Fingerprints iguais comparam os objetos selecionados; advisors sem achados e audit sem vulnerabilidades conhecidas não são prova formal de ausência de risco.</p><h3>Explique o teste de renovação com precisão</h3><p>O runner antecipou o vencimento guardado no cookie mantendo token assinado e refresh real, observando rotação. Isso não é esperar uma hora de expiração natural. Novo contexto de navegador com cookies persistidos prova persistência além da instância em memória. Revogação e isolamento foram cenários separados.</p><h3>Leitura orientada dos arquivos</h3><ul><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/supabase/migrations/20261114001621_monotonic_history_dates.sql">supabase/migrations/20261114001621_monotonic_history_dates.sql</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-next-auth.mjs">scripts/check-next-auth.mjs</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/next-auth-cleanup.mjs">scripts/next-auth-cleanup.mjs</a> — localize entrada, validação, efeito e tratamento de falha.</li><li><a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/scripts/check-rls.mjs">scripts/check-rls.mjs</a> — localize entrada, validação, efeito e tratamento de falha.</li></ul><p><strong>Resultados documentados:</strong> PR #6 integrado, merge db84b3a. 295 RLS +25 Next por ambiente; Auth 32 por ambiente nessa entrega. 100 sequências completas de nove eventos após correção. Verify: 14 testes, lint, tipos e build. Cinco migrations e fingerprints de objetos coincidentes local/cloud; advisors sem achados na época. <a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/revisao-integracao-seguranca-validation.md">Conferir relatório</a>.</p><div class="exercise"><h3>Prática: Defenda a correção das datas</h3><p>Último evento está uma hora à frente e o relógio atual está atrás. Qual data a próxima RPC escolhe? Dois processos fazem a mesma pergunta ao mesmo tempo: o que impede a colisão lógica?</p><details><summary>Conferir o raciocínio</summary><p>O limite é último evento +1 microssegundo, protegido pelo lock da solicitação. Explique por que isso é ordem lógica local e não relógio global.</p></details></div><h3>Uma forma de explicar em voz alta</h3><p>“O problema desta tarefa era… A solução ficou em… A entrada passa por… O banco garante… Conferimos isso com… O teste não demonstra…”</p><p>Complete com detalhes deste módulo. Se não conseguir explicar uma dessas frases, volte ao arquivo ou ao relatório antes de avançar.</p></section><section><h2>Contrato das operações: o que memorizar e o que consultar</h2><table><tr><th>Operação</th><th>Entrada e decisão</th><th>Efeito</th></tr><tr><td>abrir_solicitacao</td><td>p_titulo, p_descricao, p_local; Cliente ativo</td><td>Pendente, autor solicitante atual e abertura</td></tr><tr><td>transicionar_solicitacao</td><td>p_id, p_status; papel + estado + responsável atual</td><td>Novo status e evento</td></tr><tr><td>organizar_solicitacao</td><td>p_id, p_prioridade, p_responsavel_id; Gestor em Aprovada/Em atendimento</td><td>Par completo desejado, eventos só das diferenças</td></tr><tr><td>adicionar_observacao</td><td>p_id, p_observacao; Gestor ou responsável antes do terminal</td><td>Novo evento imutável</td></tr></table><p>Memorize quem decide e a garantia de consistência. Consulte a assinatura e os nomes dos parâmetros quando necessário. Não informe papel, autor ou data como autoridade na chamada.</p><pre>const resultado = await client.rpc("abrir_solicitacao", {
+  p_titulo: "Lâmpada apagada",
+  p_descricao: "Não acende ao ligar",
+  p_local: "Sala 1"
+});
+// Examine resultado.error antes de afirmar que foi gravado.
+// client deve carregar a sessão real do Cliente no ambiente escolhido.</pre><h3>Roteiro para interpretar erros</h3><table><tr><th>Código</th><th>Pergunta a fazer</th></tr><tr><td>42501</td><td>A pessoa está ativa, tem papel, acesso ao alvo e estado compatíveis?</td></tr><tr><td>23514</td><td>Texto, limite, responsável ou combinação de campos violam o contrato?</td></tr><tr><td>23502 / 22P02</td><td>Há nulo obrigatório, UUID ou enum inválido?</td></tr><tr><td>PGRST202</td><td>Assinatura, parâmetros ou migration estão diferentes do contrato?</td></tr><tr><td>Rede/serviço</td><td>A operação chegou a concluir? Reconsultar antes de repetir.</td></tr></table></section><section id="simulado"><h2>Simulado completo: 31 perguntas comentadas</h2><p>Responda primeiro sem abrir. Em cada resposta acrescente uma referência ao código, um exemplo permitido e um exemplo negado. A resposta abaixo é um núcleo de raciocínio, não um texto para decorar.</p><h3>1. Setup Supabase</h3><details><summary>01. Por que a chave publicável pode estar no navegador?</summary><p><strong>Núcleo da resposta:</strong> Ela identifica o projeto e o papel público de acesso; a sessão e as políticas do banco delimitam os dados. Uma chave administrativa contornaria essa proteção. Mostrar a validação que rejeita segredos antes do bundle.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 1, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>02. Como você distingue serviço disponível de regra de negócio funcionando?</summary><p><strong>Núcleo da resposta:</strong> O healthcheck confirma uma consulta técnica. Não comprova login, RLS, escrita nem funcionamento completo das telas.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 1, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>03. O que acontece se cloud receber URL localhost?</summary><p><strong>Núcleo da resposta:</strong> A configuração rejeita a combinação. Mostrar getSupabaseConfig e explicar HTTPS em cloud, loopback local e arquivos de ambiente ignorados.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 1, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><h3>2. Tabelas principais</h3><details><summary>04. Por que existem UUID e número sequencial?</summary><p><strong>Núcleo da resposta:</strong> UUID é identidade interna; número facilita referência humana. Sequência pode ter lacunas e não reinicia anualmente.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 2, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>05. O que CHECK, FK e trigger resolvem neste modelo?</summary><p><strong>Núcleo da resposta:</strong> CHECK valida a própria linha, FK garante referências; regras entre tabelas e imutabilidade exigem mecanismos adicionais como triggers. Mostrar exemplos reais na migration.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 2, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>06. Apagar conta e desativar perfil são equivalentes?</summary><p><strong>Núcleo da resposta:</strong> Não. A FK restritiva preserva autoria; ativo=false retira acesso de produto sem destruir solicitações e histórico.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 2, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>07. Quais limites os formulários precisam respeitar?</summary><p><strong>Núcleo da resposta:</strong> Nome 120, título 150, local 200, descrição/observação 5000; textos obrigatórios não podem ser vazios. Categoria não faz parte deste MVP.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 2, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><h3>3. Autenticação</h3><details><summary>08. Posso mandar papel=gestor no cadastro?</summary><p><strong>Núcleo da resposta:</strong> Não pode conceder privilégio. A entrada do wrapper rejeita campos extras e o banco impõe papel; chamada direta ao Auth também não deve elevar privilégio por metadados.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 3, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>09. Por que criar perfil em trigger?</summary><p><strong>Núcleo da resposta:</strong> Conta e perfil ficam na mesma transação. Se o perfil falhar, não fica conta órfã. Explicar teste com falha real e nova tentativa.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 3, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>10. Por que getUser e depois profiles?</summary><p><strong>Núcleo da resposta:</strong> Identidade validada pelo Auth não equivale a permissão de produto. Papel e atividade vêm do banco, não de user_metadata editável.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 3, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>11. Por que o proxy atualiza request e response?</summary><p><strong>Núcleo da resposta:</strong> O processamento atual precisa ver os cookies renovados e o navegador precisa recebê-los para próximas requisições. Server Component não pode gravar cookies, daí o papel do proxy.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 3, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>12. Logout invalida instantaneamente todo JWT em todos os dispositivos?</summary><p><strong>Núcleo da resposta:</strong> Não. Usa scope local; remove capacidade de renovação da sessão atual e cookies, sem prometer invalidação imediata de todo token já emitido. Outro dispositivo permanece autenticado.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 3, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>13. Um inativo sempre retorna profile_inactive?</summary><p><strong>Núcleo da resposta:</strong> Não necessariamente: RLS pode ocultar o perfil e context retornar profile_missing. A tela deve tratar ambos como ausência de acesso.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 3, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><h3>4. RLS e operações autorizadas</h3><details><summary>14. Por que esconder botão não protege uma ação?</summary><p><strong>Núcleo da resposta:</strong> A pessoa pode chamar Data API/RPC diretamente. A decisão deve ser revalidada no banco usando identidade e perfil atuais.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 4, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>15. Por que authenticated não é autorização suficiente?</summary><p><strong>Núcleo da resposta:</strong> Indica apenas sessão autenticada. Cada linha e cada operação precisam de vínculo/papel/atividade válidos.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 4, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>16. Após reatribuir, o antigo responsável conserva acesso ao histórico?</summary><p><strong>Núcleo da resposta:</strong> Não nas próximas operações; o novo responsável vê o histórico completo, inclusive eventos anteriores.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 4, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>17. Por que usar funções privilegiadas se RLS existe?</summary><p><strong>Núcleo da resposta:</strong> Para executar operações estreitas sem liberar escrita geral. Não basta SECURITY DEFINER: mostrar schema privado, permissões, search_path vazio, validação e wrappers invoker.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 4, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>18. Como provar uma negativa de acesso sem depender da tela?</summary><p><strong>Núcleo da resposta:</strong> Autenticar duas pessoas reais, consultar ID conhecido da outra pela API e tentar RPC/DML direto. Verificar ausência de dados e de efeitos, não apenas texto de erro.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 4, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><h3>5. Persistência e histórico</h3><details><summary>19. Quais transições são permitidas e por quem?</summary><p><strong>Núcleo da resposta:</strong> Gestor: Pendente→Aprovada ou Descartada. Responsável atual: Aprovada→Em atendimento→Concluída. Atendimento exige prioridade e responsável; não há reabertura.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 5, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>20. Se o segundo evento de organização falhar, o que sobra?</summary><p><strong>Núcleo da resposta:</strong> Nada da operação: alteração dos dois campos e primeiro evento são desfeitos. Mostrar teste que induz falha real e confere estado anterior.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 5, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>21. Enviar null em organizar significa manter valor?</summary><p><strong>Núcleo da resposta:</strong> Não: remove valor, quando o estado permite. É obrigatório enviar os dois valores desejados; a tela deve preservar explicitamente o campo que não quer mudar.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 5, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>22. Repetir organização idêntica cria histórico?</summary><p><strong>Núcleo da resposta:</strong> Não. Sem diferença não há evento; mudar os dois campos gera dois eventos com pares anterior/novo.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 5, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>23. Como provar que concorrência foi tratada?</summary><p><strong>Núcleo da resposta:</strong> Mostrar locks e testes de reatribuição/início e conclusão/observação. Explicar ordens válidas e por que não deve haver autorização obsoleta ou alteração parcial.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 5, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>24. Perdi a resposta de uma observação; posso repetir automaticamente?</summary><p><strong>Núcleo da resposta:</strong> Reconsultar antes. Não há chave de idempotência; nova chamada explícita registra outra observação.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 5, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><h3>6. Revisão de integração e segurança</h3><details><summary>25. Por que clock_timestamp sozinho não garante ordem?</summary><p><strong>Núcleo da resposta:</strong> O relógio pode recuar ou repetir horário. A correção calcula limite lógico sob lock por solicitação; não promete ordem global e pode ficar à frente do relógio físico.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 6, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>26. Como provar que o diagnóstico não foi um palpite?</summary><p><strong>Núcleo da resposta:</strong> Probe reproduziu na 22ª sequência; payload/autoria batiam com chamadas e tempo monotônico do executor avançava. Regressão com evento futuro falhou antes e passou depois.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 6, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>27. Os 295 checks são 295 testes unitários?</summary><p><strong>Núcleo da resposta:</strong> Não. São verificações do runner contra API e banco reais. Os 14 testes do verify são outra camada; não somar números como se fossem o mesmo tipo de cobertura.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 6, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>28. Como testou renovação sem esperar uma hora?</summary><p><strong>Núcleo da resposta:</strong> Antecipou vencimento armazenado no cookie mantendo JWT assinado/refresh real. Explicar limites dessa simulação e a rotação efetiva.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 6, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>29. Qual a diferença entre fingerprint igual e comportamento correto?</summary><p><strong>Núcleo da resposta:</strong> Fingerprint detecta divergência das definições comparadas, não cobre toda configuração e não substitui testes de comportamento.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 6, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>30. O que significa advisor vazio?</summary><p><strong>Núcleo da resposta:</strong> Nenhum achado naquele momento e no recorte da ferramenta; não é prova absoluta de segurança. Auditoria runtime sem vulnerabilidades conhecidas e aviso dev-only foram resultados históricos.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 6, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details><details><summary>31. O que uma falha de cleanup deve causar?</summary><p><strong>Núcleo da resposta:</strong> Continuar tentando outras limpezas, incluindo SQL, e retornar falha sem expor segredos. Mostrar os três testes com falhas induzidas.</p><p><strong>Para responder com propriedade:</strong> relacione este ponto à explicação do módulo 6, abra um dos arquivos indicados e diga qual comportamento observável confirma a proteção. Diferencie o que o código pretende fazer do que foi efetivamente testado.</p></details></section><section><h2>Leitura guiada do código real</h2><p>Os trechos abaixo são os arquivos da base inspecionada, incorporados para estudo offline. A migration final substitui implementações privadas anteriores; para entender o estado vigente, leia as migrations em ordem e considere a definição mais recente.</p><details><summary>src/lib/supabase/config.ts</summary><pre>type Environment = Record&lt;string, string | undefined&gt;;
+
+export function getPublicSupabaseConfig() {
+  // Referências estáticas permitem ao Next.js incluir apenas estes valores públicos no browser.
+  return getSupabaseConfig({
+    NEXT_PUBLIC_SUPABASE_ENV: process.env.NEXT_PUBLIC_SUPABASE_ENV,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  });
+}
+
+export function getSupabaseConfig(env: Environment) {
+  const environment = env.NEXT_PUBLIC_SUPABASE_ENV;
+  if (environment !== &quot;local&quot; &amp;&amp; environment !== &quot;cloud&quot;) {
+    throw new Error(&quot;NEXT_PUBLIC_SUPABASE_ENV deve ser local ou cloud.&quot;);
+  }
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) throw new Error(&quot;Configure NEXT_PUBLIC_SUPABASE_URL.&quot;);
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(&quot;NEXT_PUBLIC_SUPABASE_URL deve ser uma URL válida.&quot;);
+  }
+  const loopback = [&quot;localhost&quot;, &quot;127.0.0.1&quot;, &quot;[::1]&quot;].includes(parsed.hostname);
+  if (environment === &quot;local&quot; ? !loopback || ![&quot;http:&quot;, &quot;https:&quot;].includes(parsed.protocol) : loopback || parsed.protocol !== &quot;https:&quot;) {
+    throw new Error(&quot;URL incompatível com o ambiente: local exige loopback; cloud exige HTTPS fora de loopback.&quot;);
+  }
+  if (parsed.username || parsed.password || parsed.pathname !== &quot;/&quot; || parsed.search || parsed.hash) {
+    throw new Error(&quot;NEXT_PUBLIC_SUPABASE_URL deve conter apenas a origem, sem credenciais, caminho ou parâmetros.&quot;);
+  }
+  const publishableKey = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!publishableKey) throw new Error(&quot;Configure NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.&quot;);
+  validateSupabasePublishableKey(publishableKey, environment);
+  return { environment, url, publishableKey };
+}
+
+export function validateSupabasePublishableKey(publishableKey: string, environment: string | undefined) {
+  let legacyAnon = false;
+  if (publishableKey.startsWith(&quot;eyJ&quot;)) {
+    try {
+      legacyAnon = JSON.parse(atob(publishableKey.split(&quot;.&quot;)[1].replace(/-/g, &quot;+&quot;).replace(/_/g, &quot;/&quot;))).role === &quot;anon&quot;;
+    } catch {
+      // Chaves malformadas são recusadas abaixo sem imprimir seu conteúdo.
+    }
+  }
+  if (!publishableKey.startsWith(&quot;sb_publishable_&quot;) &amp;&amp; !(environment === &quot;local&quot; &amp;&amp; legacyAnon)) {
+    throw new Error(&quot;Use uma chave publicável sb_publishable_; apenas local aceita a chave anon legada. Chaves privilegiadas são proibidas.&quot;);
+  }
+}
+</pre></details><details><summary>src/lib/auth.ts</summary><pre>import type { SupabaseClient } from &quot;@supabase/supabase-js&quot;;
+
+export type AuthError = &quot;invalid_input&quot; | &quot;invalid_credentials&quot; | &quot;not_authenticated&quot; | &quot;profile_missing&quot; | &quot;profile_inactive&quot; | &quot;profile_creation_failed&quot; | &quot;signup_failed&quot; | &quot;unavailable&quot;;
+export type Profile = { id: string; nome: string; papel: &quot;cliente&quot; | &quot;gestor&quot; | &quot;manutentor&quot;; ativo: boolean; created_at: string };
+export type AuthResult = { ok: true; user: { id: string; email: string | undefined }; profile: Profile } | { ok: false; error: AuthError };
+const failure = (error: AuthError): AuthResult =&gt; ({ ok: false, error });
+
+function credentials(input: unknown, signup: boolean): input is { nome: string; email: string; password: string } {
+  if (!input || typeof input !== &quot;object&quot;) return false;
+  const value = input as Record&lt;string, unknown&gt;;
+  const keys = signup ? [&quot;nome&quot;, &quot;email&quot;, &quot;password&quot;] : [&quot;email&quot;, &quot;password&quot;];
+  if (Object.keys(value).some(key =&gt; !keys.includes(key))) return false;
+  return typeof value.email === &quot;string&quot; &amp;&amp; /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email.trim())
+    &amp;&amp; typeof value.password === &quot;string&quot; &amp;&amp; value.password.length &gt; 0
+    &amp;&amp; (!signup || (typeof value.nome === &quot;string&quot; &amp;&amp; value.nome.trim().length &gt; 0 &amp;&amp; [...value.nome].length &lt;= 120));
+}
+
+function providerError(error: { code?: string; status?: number }, signup = false): AuthResult {
+  if (error.code === &quot;invalid_credentials&quot;) return failure(&quot;invalid_credentials&quot;);
+  if (signup &amp;&amp; error.code === &quot;unexpected_failure&quot;) return failure(&quot;profile_creation_failed&quot;);
+  if (error.code === &quot;user_already_exists&quot;) return failure(&quot;signup_failed&quot;);
+  if (error.code === &quot;weak_password&quot; || error.code === &quot;email_address_invalid&quot; || error.code === &quot;validation_failed&quot;) return failure(&quot;invalid_input&quot;);
+  if (error.status === 429) return failure(&quot;unavailable&quot;);
+  if (error.status &amp;&amp; error.status &lt; 500) return failure(signup ? &quot;signup_failed&quot; : &quot;invalid_credentials&quot;);
+  return failure(&quot;unavailable&quot;);
+}
+
+export function createAuth(client: SupabaseClient) {
+  async function context(): Promise&lt;AuthResult&gt; {
+    try {
+      const { data, error } = await client.auth.getUser();
+      if (error) {
+        if ([&quot;session_not_found&quot;, &quot;refresh_token_not_found&quot;, &quot;refresh_token_already_used&quot;, &quot;bad_jwt&quot;].includes(error.code ?? &quot;&quot;) || error.name === &quot;AuthSessionMissingError&quot; || error.status === 401 || error.status === 403) return failure(&quot;not_authenticated&quot;);
+        return failure(&quot;unavailable&quot;);
+      }
+      if (!data.user) return failure(&quot;not_authenticated&quot;);
+      const profile = await client.from(&quot;profiles&quot;).select(&quot;id,nome,papel,ativo,created_at&quot;).eq(&quot;id&quot;, data.user.id).maybeSingle();
+      if (profile.error) return failure(&quot;unavailable&quot;);
+      if (!profile.data) return failure(&quot;profile_missing&quot;);
+      if (!profile.data.ativo) return failure(&quot;profile_inactive&quot;);
+      return { ok: true, user: { id: data.user.id, email: data.user.email }, profile: profile.data as Profile };
+    } catch {
+      return failure(&quot;unavailable&quot;);
+    }
+  }
+  return {
+    context,
+    async signUp(input: unknown): Promise&lt;AuthResult&gt; {
+      if (!credentials(input, true)) return failure(&quot;invalid_input&quot;);
+      try {
+        const { data, error } = await client.auth.signUp({ email: input.email.trim(), password: input.password, options: { data: { nome: input.nome.trim() } } });
+        if (error) return providerError(error, true);
+        if (!data.session) return failure(&quot;signup_failed&quot;);
+        return await context();
+      } catch {
+        return failure(&quot;unavailable&quot;);
+      }
+    },
+    async signIn(input: unknown): Promise&lt;AuthResult&gt; {
+      if (!credentials(input, false)) return failure(&quot;invalid_input&quot;);
+      try {
+        const { error } = await client.auth.signInWithPassword({ email: input.email.trim(), password: input.password });
+        if (error) return providerError(error);
+        return await context();
+      } catch {
+        return failure(&quot;unavailable&quot;);
+      }
+    },
+    async signOut(): Promise&lt;{ ok: true } | { ok: false; error: AuthError }&gt; {
+      try {
+        const { error } = await client.auth.signOut({ scope: &quot;local&quot; });
+        return error ? { ok: false, error: &quot;unavailable&quot; } : { ok: true };
+      } catch {
+        return { ok: false, error: &quot;unavailable&quot; };
+      }
+    },
+  };
+}
+</pre></details><details><summary>src/lib/supabase/server.ts</summary><pre>import &quot;server-only&quot;;
+
+import { createServerClient } from &quot;@supabase/ssr&quot;;
+import { cookies } from &quot;next/headers&quot;;
+import { getPublicSupabaseConfig } from &quot;./config&quot;;
+
+// Auth mutations must run in a Server Action or Route Handler so cookies can
+// be written. In Server Components the proxy persists refreshed cookies.
+export async function createServerSupabaseClient() {
+  const { url, publishableKey } = getPublicSupabaseConfig();
+  const store = await cookies();
+  return createServerClient(url, publishableKey, {
+    cookies: {
+      getAll: () =&gt; store.getAll(),
+      setAll(values) {
+        try {
+          values.forEach(({ name, value, options }) =&gt; store.set(name, value, options));
+        } catch {
+          // Server Components cannot write; src/proxy.ts refreshes before render.
+        }
+      },
+    },
+  });
+}
+</pre></details><details><summary>src/proxy.ts</summary><pre>import { createServerClient } from &quot;@supabase/ssr&quot;;
+import { NextResponse, type NextRequest } from &quot;next/server&quot;;
+import { getPublicSupabaseConfig } from &quot;./lib/supabase/config&quot;;
+
+export async function proxy(request: NextRequest) {
+  const { url, publishableKey } = getPublicSupabaseConfig();
+  let response = NextResponse.next({ request });
+  const client = createServerClient(url, publishableKey, {
+    cookies: {
+      getAll: () =&gt; request.cookies.getAll(),
+      setAll(values, headers) {
+        values.forEach(({ name, value }) =&gt; request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        values.forEach(({ name, value, options }) =&gt; response.cookies.set(name, value, options));
+        Object.entries(headers).forEach(([key, value]) =&gt; response.headers.set(key, value));
+      },
+    },
+  });
+  await client.auth.getUser();
+  response.headers.set(&quot;Cache-Control&quot;, &quot;private, no-store&quot;);
+  return response;
+}
+
+export const config = {
+  matcher: [&quot;/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)&quot;],
+};
+</pre></details><details><summary>supabase/migrations/20261111231601_mvp01_auth.sql</summary><pre>-- Auth insere a conta e o perfil na mesma transação. Esta função só é
+-- executável pelo trigger; não é um endpoint e não aceita identidade do cliente.
+create function private.criar_profile_auth() returns trigger
+language plpgsql security definer set search_path = &#x27;&#x27; as $$
+begin
+  insert into public.profiles (id, nome, papel, ativo)
+  values (
+    new.id,
+    new.raw_user_meta_data -&gt;&gt; &#x27;nome&#x27;,
+    coalesce((select u.raw_app_meta_data -&gt;&gt; &#x27;fixit_papel&#x27; from auth.users u where u.id = new.id), &#x27;cliente&#x27;)::public.papel_perfil,
+    true
+  );
+  return new;
+end $$;
+revoke all on function private.criar_profile_auth() from public, anon, authenticated;
+create constraint trigger criar_profile_auth after insert on auth.users
+deferrable initially deferred for each row execute function private.criar_profile_auth();
+
+-- Somente o contexto da própria pessoa. Escritas e as demais tabelas
+-- continuam fechadas até as políticas específicas do MVP-02.
+grant select on public.profiles to authenticated;
+create policy ler_proprio_profile on public.profiles for select to authenticated
+using (id = (select auth.uid()));
+</pre></details><details><summary>supabase/migrations/20261112203635_mvp02_rls.sql</summary><pre>-- Reads are RLS-filtered. All application writes go through narrow operations:
+-- callers cannot supply identity, author, timestamp or arbitrary audit events.
+-- Definer implementations live outside exposed schemas and authorize each call;
+-- public wrappers retain invoker security. No application role gets table DML.
+grant usage on schema private to authenticated;
+grant select on public.solicitacoes, public.historico to authenticated;
+drop policy ler_proprio_profile on public.profiles;
+
+create function private.meu_papel_ativo() returns public.papel_perfil
+language sql stable security definer set search_path = &#x27;&#x27; as $$
+  select p.papel from public.profiles p where p.id = (select auth.uid()) and p.ativo
+$$;
+revoke all on function private.meu_papel_ativo() from public, anon, authenticated;
+grant execute on function private.meu_papel_ativo() to authenticated;
+
+create function private.pode_ler_solicitacao(p_id uuid) returns boolean
+language sql stable security definer set search_path = &#x27;&#x27; as $$
+  select exists (
+    select 1 from public.solicitacoes s
+    where s.id = p_id and case private.meu_papel_ativo()
+      when &#x27;gestor&#x27; then true
+      when &#x27;cliente&#x27; then s.solicitante_id = (select auth.uid())
+      when &#x27;manutentor&#x27; then s.responsavel_id = (select auth.uid())
+      else false end
+  )
+$$;
+revoke all on function private.pode_ler_solicitacao(uuid) from public, anon, authenticated;
+grant execute on function private.pode_ler_solicitacao(uuid) to authenticated;
+
+create function private.pode_ler_profile(p_id uuid) returns boolean
+language sql stable security definer set search_path = &#x27;&#x27; as $$
+  select private.meu_papel_ativo() is not null and (
+    p_id = (select auth.uid())
+    or (private.meu_papel_ativo() = &#x27;gestor&#x27; and exists (
+      select 1 from public.profiles p where p.id = p_id and p.papel = &#x27;manutentor&#x27; and p.ativo
+    ))
+    or exists (
+      select 1 from public.solicitacoes s where private.pode_ler_solicitacao(s.id)
+      and (s.solicitante_id = p_id or s.responsavel_id = p_id or exists (
+        select 1 from public.historico h where h.solicitacao_id = s.id
+        and p_id in (h.autor_id, h.responsavel_anterior, h.responsavel_novo)
+      ))
+    )
+  )
+$$;
+revoke all on function private.pode_ler_profile(uuid) from public, anon, authenticated;
+grant execute on function private.pode_ler_profile(uuid) to authenticated;
+
+create policy ler_solicitacoes on public.solicitacoes for select to authenticated
+using (private.pode_ler_solicitacao(id));
+create policy ler_historico on public.historico for select to authenticated
+using (private.pode_ler_solicitacao(solicitacao_id));
+create policy ler_profiles_necessarios on public.profiles for select to authenticated
+using (private.pode_ler_profile(id));
+
+-- Internal only. A SHARE lock conflicts with profile deactivation, including
+-- non-key updates; FOR KEY SHARE would not protect the active check.
+create function private.operador_ativo() returns public.profiles
+language plpgsql security definer set search_path = &#x27;&#x27; as $$
+declare operador public.profiles;
+begin
+  select * into operador from public.profiles where id = (select auth.uid()) for share;
+  if not found or not operador.ativo then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  return operador;
+end $$;
+revoke all on function private.operador_ativo() from public, anon, authenticated;
+
+create function private.abrir_solicitacao(p_titulo text, p_descricao text, p_local text)
+returns public.solicitacoes language plpgsql security definer set search_path = &#x27;&#x27; as $$
+declare operador public.profiles; criada public.solicitacoes;
+begin
+  operador := private.operador_ativo();
+  if operador.papel &lt;&gt; &#x27;cliente&#x27; then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  insert into public.solicitacoes(solicitante_id, titulo, descricao, local)
+  values (operador.id, p_titulo, p_descricao, p_local) returning * into criada;
+  insert into public.historico(solicitacao_id, autor_id, tipo, created_at)
+  values (criada.id, operador.id, &#x27;abertura&#x27;, clock_timestamp());
+  return criada;
+end $$;
+revoke all on function private.abrir_solicitacao(text,text,text) from public, anon, authenticated;
+grant execute on function private.abrir_solicitacao(text,text,text) to authenticated;
+create function public.abrir_solicitacao(p_titulo text, p_descricao text, p_local text)
+returns public.solicitacoes language sql security invoker set search_path = &#x27;&#x27; as $$
+  select private.abrir_solicitacao(p_titulo, p_descricao, p_local)
+$$;
+revoke all on function public.abrir_solicitacao(text,text,text) from public, anon, authenticated;
+grant execute on function public.abrir_solicitacao(text,text,text) to authenticated;
+
+-- Event timestamps use the clock after lock acquisition, not transaction-start
+-- time, so a waiting operation cannot appear before the operation it waited for.
+-- Re-read state and responsibility after obtaining the same row lock used by
+-- organization and observations. An old owner cannot act on a stale snapshot.
+create function private.transicionar_solicitacao(p_id uuid, p_status public.status_solicitacao)
+returns public.solicitacoes language plpgsql security definer set search_path = &#x27;&#x27; as $$
+declare operador public.profiles; anterior public.solicitacoes; atual public.solicitacoes;
+begin
+  operador := private.operador_ativo();
+  select * into anterior from public.solicitacoes where id = p_id for update;
+  if not found then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  if not coalesce(
+    (operador.papel = &#x27;gestor&#x27; and anterior.status = &#x27;pendente&#x27; and p_status in (&#x27;aprovada&#x27;,&#x27;descartada&#x27;))
+    or (operador.papel = &#x27;manutentor&#x27; and anterior.responsavel_id = operador.id and (
+      (anterior.status = &#x27;aprovada&#x27; and p_status = &#x27;em_atendimento&#x27;)
+      or (anterior.status = &#x27;em_atendimento&#x27; and p_status = &#x27;concluida&#x27;)
+    )), false) then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  update public.solicitacoes set status = p_status where id = p_id returning * into atual;
+  insert into public.historico(solicitacao_id,autor_id,tipo,status_anterior,status_novo,created_at)
+  values (p_id,operador.id,&#x27;alteracao_status&#x27;,anterior.status,atual.status,clock_timestamp());
+  return atual;
+end $$;
+revoke all on function private.transicionar_solicitacao(uuid,public.status_solicitacao) from public, anon, authenticated;
+grant execute on function private.transicionar_solicitacao(uuid,public.status_solicitacao) to authenticated;
+create function public.transicionar_solicitacao(p_id uuid, p_status public.status_solicitacao)
+returns public.solicitacoes language sql security invoker set search_path = &#x27;&#x27; as $$
+  select private.transicionar_solicitacao(p_id, p_status)
+$$;
+revoke all on function public.transicionar_solicitacao(uuid,public.status_solicitacao) from public, anon, authenticated;
+grant execute on function public.transicionar_solicitacao(uuid,public.status_solicitacao) to authenticated;
+
+-- Both organization fields are a complete desired pair, not an ambiguous patch.
+-- Null removes a value only while the existing state permits the resulting row.
+create function private.organizar_solicitacao(p_id uuid, p_prioridade public.prioridade_solicitacao, p_responsavel_id uuid)
+returns public.solicitacoes language plpgsql security definer set search_path = &#x27;&#x27; as $$
+declare operador public.profiles; anterior public.solicitacoes; atual public.solicitacoes;
+begin
+  operador := private.operador_ativo();
+  if operador.papel &lt;&gt; &#x27;gestor&#x27; then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  select * into anterior from public.solicitacoes where id = p_id for update;
+  if not found or anterior.status not in (&#x27;aprovada&#x27;,&#x27;em_atendimento&#x27;) then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  update public.solicitacoes set prioridade = p_prioridade, responsavel_id = p_responsavel_id
+  where id = p_id returning * into atual;
+  if anterior.prioridade is distinct from atual.prioridade then
+    insert into public.historico(solicitacao_id,autor_id,tipo,prioridade_anterior,prioridade_nova,created_at)
+    values (p_id,operador.id,&#x27;alteracao_prioridade&#x27;,anterior.prioridade,atual.prioridade,clock_timestamp());
+  end if;
+  if anterior.responsavel_id is distinct from atual.responsavel_id then
+    insert into public.historico(solicitacao_id,autor_id,tipo,responsavel_anterior,responsavel_novo,created_at)
+    values (p_id,operador.id,&#x27;alteracao_responsavel&#x27;,anterior.responsavel_id,atual.responsavel_id,clock_timestamp());
+  end if;
+  return atual;
+end $$;
+revoke all on function private.organizar_solicitacao(uuid,public.prioridade_solicitacao,uuid) from public, anon, authenticated;
+grant execute on function private.organizar_solicitacao(uuid,public.prioridade_solicitacao,uuid) to authenticated;
+create function public.organizar_solicitacao(p_id uuid, p_prioridade public.prioridade_solicitacao, p_responsavel_id uuid)
+returns public.solicitacoes language sql security invoker set search_path = &#x27;&#x27; as $$
+  select private.organizar_solicitacao(p_id, p_prioridade, p_responsavel_id)
+$$;
+revoke all on function public.organizar_solicitacao(uuid,public.prioridade_solicitacao,uuid) from public, anon, authenticated;
+grant execute on function public.organizar_solicitacao(uuid,public.prioridade_solicitacao,uuid) to authenticated;
+
+create function private.adicionar_observacao(p_id uuid, p_observacao text)
+returns public.historico language plpgsql security definer set search_path = &#x27;&#x27; as $$
+declare operador public.profiles; solicitacao public.solicitacoes; evento public.historico;
+begin
+  operador := private.operador_ativo();
+  select * into solicitacao from public.solicitacoes where id = p_id for update;
+  if not found or solicitacao.status in (&#x27;concluida&#x27;,&#x27;descartada&#x27;) or not coalesce(
+    operador.papel = &#x27;gestor&#x27; or (operador.papel = &#x27;manutentor&#x27; and solicitacao.responsavel_id = operador.id), false
+  ) then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  insert into public.historico(solicitacao_id,autor_id,tipo,observacao,created_at)
+  values (p_id,operador.id,&#x27;observacao&#x27;,p_observacao,clock_timestamp()) returning * into evento;
+  return evento;
+end $$;
+revoke all on function private.adicionar_observacao(uuid,text) from public, anon, authenticated;
+grant execute on function private.adicionar_observacao(uuid,text) to authenticated;
+create function public.adicionar_observacao(p_id uuid, p_observacao text)
+returns public.historico language sql security invoker set search_path = &#x27;&#x27; as $$
+  select private.adicionar_observacao(p_id, p_observacao)
+$$;
+revoke all on function public.adicionar_observacao(uuid,text) from public, anon, authenticated;
+grant execute on function public.adicionar_observacao(uuid,text) to authenticated;
+
+notify pgrst, &#x27;reload schema&#x27;;
+</pre></details><details><summary>supabase/migrations/20261114001621_monotonic_history_dates.sql</summary><pre>-- RPCs already serialize each request with a row lock (or own the new row).
+-- Wall clocks can move backwards; assign strictly increasing dates per request
+-- so the documented created_at/id ordering follows the committed operations.
+-- This guarantee covers application RPCs, not direct administrative SQL.
+create function private.proxima_data_historico(p_id uuid) returns timestamptz
+language sql volatile security invoker set search_path = &#x27;&#x27; as $$
+  select greatest(
+    clock_timestamp(),
+    s.created_at,
+    (select max(h.created_at) + interval &#x27;1 microsecond&#x27;
+     from public.historico h where h.solicitacao_id = s.id)
+  ) from public.solicitacoes s where s.id = p_id
+$$;
+revoke all on function private.proxima_data_historico(uuid) from public, anon, authenticated;
+
+create or replace function private.abrir_solicitacao(p_titulo text, p_descricao text, p_local text)
+returns public.solicitacoes language plpgsql security definer set search_path = &#x27;&#x27; as $$
+declare operador public.profiles; criada public.solicitacoes;
+begin
+  operador := private.operador_ativo();
+  if operador.papel &lt;&gt; &#x27;cliente&#x27; then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  insert into public.solicitacoes(solicitante_id, titulo, descricao, local)
+  values (operador.id, p_titulo, p_descricao, p_local) returning * into criada;
+  insert into public.historico(solicitacao_id, autor_id, tipo, created_at)
+  values (criada.id, operador.id, &#x27;abertura&#x27;, private.proxima_data_historico(criada.id));
+  return criada;
+end $$;
+
+create or replace function private.transicionar_solicitacao(p_id uuid, p_status public.status_solicitacao)
+returns public.solicitacoes language plpgsql security definer set search_path = &#x27;&#x27; as $$
+declare operador public.profiles; anterior public.solicitacoes; atual public.solicitacoes;
+begin
+  operador := private.operador_ativo();
+  select * into anterior from public.solicitacoes where id = p_id for update;
+  if not found then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  if not coalesce(
+    (operador.papel = &#x27;gestor&#x27; and anterior.status = &#x27;pendente&#x27; and p_status in (&#x27;aprovada&#x27;,&#x27;descartada&#x27;))
+    or (operador.papel = &#x27;manutentor&#x27; and anterior.responsavel_id = operador.id and (
+      (anterior.status = &#x27;aprovada&#x27; and p_status = &#x27;em_atendimento&#x27;)
+      or (anterior.status = &#x27;em_atendimento&#x27; and p_status = &#x27;concluida&#x27;)
+    )), false) then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  update public.solicitacoes set status = p_status where id = p_id returning * into atual;
+  insert into public.historico(solicitacao_id,autor_id,tipo,status_anterior,status_novo,created_at)
+  values (p_id,operador.id,&#x27;alteracao_status&#x27;,anterior.status,atual.status,private.proxima_data_historico(p_id));
+  return atual;
+end $$;
+
+create or replace function private.organizar_solicitacao(p_id uuid, p_prioridade public.prioridade_solicitacao, p_responsavel_id uuid)
+returns public.solicitacoes language plpgsql security definer set search_path = &#x27;&#x27; as $$
+declare operador public.profiles; anterior public.solicitacoes; atual public.solicitacoes;
+begin
+  operador := private.operador_ativo();
+  if operador.papel &lt;&gt; &#x27;gestor&#x27; then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  select * into anterior from public.solicitacoes where id = p_id for update;
+  if not found or anterior.status not in (&#x27;aprovada&#x27;,&#x27;em_atendimento&#x27;) then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  update public.solicitacoes set prioridade = p_prioridade, responsavel_id = p_responsavel_id
+  where id = p_id returning * into atual;
+  if anterior.prioridade is distinct from atual.prioridade then
+    insert into public.historico(solicitacao_id,autor_id,tipo,prioridade_anterior,prioridade_nova,created_at)
+    values (p_id,operador.id,&#x27;alteracao_prioridade&#x27;,anterior.prioridade,atual.prioridade,private.proxima_data_historico(p_id));
+  end if;
+  if anterior.responsavel_id is distinct from atual.responsavel_id then
+    insert into public.historico(solicitacao_id,autor_id,tipo,responsavel_anterior,responsavel_novo,created_at)
+    values (p_id,operador.id,&#x27;alteracao_responsavel&#x27;,anterior.responsavel_id,atual.responsavel_id,private.proxima_data_historico(p_id));
+  end if;
+  return atual;
+end $$;
+
+create or replace function private.adicionar_observacao(p_id uuid, p_observacao text)
+returns public.historico language plpgsql security definer set search_path = &#x27;&#x27; as $$
+declare operador public.profiles; solicitacao public.solicitacoes; evento public.historico;
+begin
+  operador := private.operador_ativo();
+  select * into solicitacao from public.solicitacoes where id = p_id for update;
+  if not found or solicitacao.status in (&#x27;concluida&#x27;,&#x27;descartada&#x27;) or not coalesce(
+    operador.papel = &#x27;gestor&#x27; or (operador.papel = &#x27;manutentor&#x27; and solicitacao.responsavel_id = operador.id), false
+  ) then
+    raise exception &#x27;Acesso não autorizado&#x27; using errcode = &#x27;42501&#x27;;
+  end if;
+  insert into public.historico(solicitacao_id,autor_id,tipo,observacao,created_at)
+  values (p_id,operador.id,&#x27;observacao&#x27;,p_observacao,private.proxima_data_historico(p_id)) returning * into evento;
+  return evento;
+end $$;
+</pre></details></section><section><h2>Como reproduzir uma evidência sem confundir ambientes</h2><p>Primeiro leia README e o relatório da tarefa. Confira Node/npm fixados, dependências instaladas e o ambiente escolhido. Nunca copie credenciais para o material. Não execute runners cloud sem entender o procedimento de fixtures, o helper SQL e a limpeza. Uma execução parcial sem limpeza confirmada não equivale a aprovação.</p><pre>npm run verify
+npm run supabase:check -- local
+npm run supabase:check -- cloud</pre><p>verify cobre testes automatizados do repositório, lint, tipos e build; não substitui as suites reais de Auth, RLS e sessão. supabase:check confirma o setup técnico. Com configuração e infraestrutura apropriadas, os comandos especializados são:</p><pre>npm run auth:check -- local
+npm run rls:check -- local
+npm run auth:check-next -- local</pre><p>Os runners têm requisitos distintos. auth:check envolve configuração administrativa restrita ao teste; RLS e Next exigem FIXIT_AUTH_SQL_COMMAND para preparação/limpeza; Next também exige Playwright/navegador por caminho explícito. Consulte o README antes de executar. Não coloque chave administrativa no frontend e não troque ambiente sem confirmar o destino.</p><p>Para apresentar uma evidência, registre versão/commit, ambiente, comando, resultado, limpeza e limite. Não diga “rodei e passou” se você apenas leu um relatório anterior.</p></section><section id="glossario"><h2>Glossário para usar os termos com precisão</h2><table><tr><th>Termo</th><th>Neste projeto</th></tr><tr><td>SDK</td><td>Biblioteca que facilita chamadas aos serviços; não substitui as permissões do banco.</td></tr><tr><td>JWT</td><td>Token assinado com informações de sessão; assinatura válida não concede qualquer ação por si só.</td></tr><tr><td>RLS</td><td>Políticas que limitam linhas acessíveis nas tabelas.</td></tr><tr><td>RPC</td><td>Chamada remota a uma função do banco exposta pela API.</td></tr><tr><td>Constraint</td><td>Regra de integridade aplicada pelo banco.</td></tr><tr><td>Trigger</td><td>Rotina disparada por um evento de banco, como inserção de usuário.</td></tr><tr><td>Migration</td><td>Evolução SQL versionada da estrutura ou comportamento do banco.</td></tr><tr><td>Transação</td><td>Conjunto de operações que confirma ou desfaz seus efeitos de forma conjunta.</td></tr><tr><td>Atomicidade</td><td>Garantia de não persistir apenas uma parte da operação.</td></tr><tr><td>Lock</td><td>Coordenação que controla acesso concorrente a uma linha ou recurso.</td></tr><tr><td>Idempotência</td><td>Repetir uma operação mantém o mesmo efeito pretendido; observações não têm esse mecanismo no contrato.</td></tr><tr><td>Fixture</td><td>Dados isolados preparados para um teste e removidos ao final.</td></tr><tr><td>Regressão</td><td>Teste que reproduz um defeito e impede sua reintrodução silenciosa.</td></tr><tr><td>Fingerprint</td><td>Resumo das definições comparadas para detectar divergência.</td></tr><tr><td>SSR</td><td>Renderização no servidor, que precisa receber a sessão correta por requisição.</td></tr></table></section><section><h2>Checklist antes de apresentar</h2><ul><li>Consigo desenhar o fluxo completo e explicar cada fronteira.</li><li>Sei separar identidade, autorização e integridade.</li><li>Localizo as quatro RPCs e explico transições, null e eventos.</li><li>Explico rollback, locks, reatribuição e perfil inativo com exemplos.</li><li>Explico o defeito real de relógio, a regressão e os limites da correção.</li><li>Sei diferenciar teste histórico de teste que executei pessoalmente.</li><li>Sei dizer que MVP-12 patrimonial está opcional/aberto e que as telas finais pertencem às outras frentes.</li><li>Consigo falar com clareza sobre minha participação e sobre a assistência usada.</li></ul><p>Se algum ponto ainda depender de decorar uma frase, volte ao módulo e acompanhe um exemplo no código. O objetivo é prever o comportamento do sistema diante de uma situação nova.</p><p><a href="material-joao.html">Abrir dossiê de avaliação complementar</a> • <a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/mvp-02-integracao.md">Contrato de integração</a> • <a href="https://github.com/Rebecamarini/Fixit2.0/blob/db84b3a16d63818a9803cc7e10615f8c06483e88/docs/specs/frente-joao-conferencia.md">Conferência das entregas</a></p></section></main></html>
