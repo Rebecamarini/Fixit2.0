@@ -10,7 +10,6 @@ export default function Sidebar() {
     const solicitacoesHref = "/solicitacoes";
     const novoHref = "/solicitacoes/nova";
     const itens = [
-        { href: "/", texto: "Visão geral", icone: "▦", ativo: pathname === "/" },
         { href: solicitacoesHref, texto: "Minhas solicitações", icone: "▤", ativo: pathname.startsWith(solicitacoesHref) && pathname !== novoHref },
         { href: novoHref, texto: "Nova solicitação", icone: "＋", ativo: pathname === novoHref },
     ];

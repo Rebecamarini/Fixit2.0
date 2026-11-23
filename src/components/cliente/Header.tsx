@@ -11,7 +11,6 @@ export default function Header({ nome }: HeaderProps) {
   const pathname = usePathname();
 
   const paginas: Record<string, string> = {
-    "/": "Visão geral",
     "/solicitacoes": "Minhas solicitações",
     "/solicitacoes/nova": "Nova solicitação",
 
