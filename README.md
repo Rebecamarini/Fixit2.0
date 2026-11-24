@@ -9,6 +9,14 @@ Stack: Next.js 16.4.6, React 19.3.1, TypeScript 5.9.3 e Supabase. Next.js e esli
 
 ## Preparação e ambientes
 
+Para iniciar com o Supabase cloud e os acessos de demonstração, na pasta do projeto execute:
+
+```sh
+npm run rodar
+```
+
+Com Node 24.18.0 e npm 11.16.0 disponíveis e `.env.supabase.cloud` configurado, esse comando verifica as dependências, instala pelo lockfile quando necessário e inicia o servidor Next.js usando o cloud. Não precisa copiar arquivos de ambiente nem iniciar Docker. O arquivo `.env.local` é preservado. Abra `http://localhost:3000/conta/entrar` e use `Ctrl+C` para encerrar. Para outra porta, use `npm run rodar -- --port 3001`.
+
 Use Node e npm nas versões acima. Docker Engine ativo (Docker Desktop ou Colima) é necessário para Supabase local.
 
 ```sh

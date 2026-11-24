@@ -9,6 +9,7 @@
   },
   "packageManager": "npm@11.16.0",
   "scripts": {
+    "rodar": "node scripts/rodar-projeto.mjs",
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
