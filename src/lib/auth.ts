@@ -20,10 +20,10 @@ export type Profile = {
 
 export type AuthResult =
   | {
-      ok: true;
-      user: { id: string; email: string | undefined };
-      profile: Profile;
-    }
+    ok: true;
+    user: { id: string; email: string | undefined };
+    profile: Profile;
+  }
   | { ok: false; error: AuthError };
 
 const failure = (error: AuthError): AuthResult => ({ ok: false, error });
@@ -40,8 +40,7 @@ function hasValidCredentials(
   if (hasUnexpectedKeys) return false;
 
   const hasValidEmail =
-    typeof value.email === "string" &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email.trim());
+    typeof value.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.email.trim());
   const hasPassword = typeof value.password === "string" && value.password.length > 0;
   const hasValidName =
     !signup ||
@@ -52,10 +51,7 @@ function hasValidCredentials(
   return hasValidEmail && hasPassword && hasValidName;
 }
 
-function providerError(
-  error: { code?: string; status?: number },
-  signup = false,
-): AuthResult {
+function providerError(error: { code?: string; status?: number }, signup = false,): AuthResult {
   if (error.code === "invalid_credentials") return failure("invalid_credentials");
   if (signup && error.code === "unexpected_failure") {
     return failure("profile_creation_failed");

@@ -3,9 +3,10 @@ import { ITENS_POR_PAGINA, LISTA_STATUS, type Status } from "./regras.ts";
 type Parametros = { status?: string | string[]; pagina?: string | string[] };
 
 export function normalizarFiltros(parametros: Parametros) {
-  const status = typeof parametros.status === "string" && LISTA_STATUS.includes(parametros.status as Status)
-    ? parametros.status as Status
-    : null;
+  const status =
+    typeof parametros.status === "string" && LISTA_STATUS.includes(parametros.status as Status)
+      ? parametros.status as Status
+      : null;
   const numero = typeof parametros.pagina === "string" ? Number(parametros.pagina) : NaN;
   // PostgREST usa offsets inteiros de 32 bits.
   const paginaMaxima = Math.floor(2_147_483_647 / ITENS_POR_PAGINA);

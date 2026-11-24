@@ -20,13 +20,20 @@ if (process.argv.length !== 3 || !["local", "cloud"].includes(environment)) {
   if (env) {
     try {
       const config = getSupabaseConfig(env);
-      if (config.environment !== environment) throw new Error("O marcador de ambiente não corresponde ao ambiente escolhido.");
+      if (config.environment !== environment)
+        throw new Error("O marcador de ambiente não corresponde ao ambiente escolhido.");
       const client = createClient(config.url, config.publishableKey, {
         auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       });
-      const { data, error, status } = await client.rpc("setup_healthcheck").abortSignal(AbortSignal.timeout(10_000));
-      if (error) throw new Error(`${environment}: consulta falhou (HTTP ${status}). Confira conexão, URL, chave e aplicação da migration.`);
-      if (data !== "fixit-v2:ok") throw new Error(`${environment}: resposta inesperada da consulta técnica.`);
+      const { data, error, status } = await client
+        .rpc("setup_healthcheck")
+        .abortSignal(AbortSignal.timeout(10_000));
+      if (error)
+        throw new Error(
+          `${environment}: consulta falhou (HTTP ${status}). Confira conexão, URL, chave e aplicação da migration.`
+        );
+      if (data !== "fixit-v2:ok")
+        throw new Error(`${environment}: resposta inesperada da consulta técnica.`);
       console.log(`${environment}: conexão e consulta confirmadas.`);
     } catch (error) {
       console.error(error.message);

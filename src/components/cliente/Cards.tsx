@@ -1,4 +1,3 @@
-
 import styles from "./Cards.module.css";
 
 type CardsStruct = {
@@ -7,11 +6,7 @@ type CardsStruct = {
   icone: string;
 };
 
-export default function Cards({
-  titulo,
-  valor,
-  icone,
-}: CardsStruct) {
+export default function Cards({ titulo, valor, icone, }: CardsStruct) {
   return (
     <div className={styles.card}>
       <div className={styles.icone}>{icone}</div>

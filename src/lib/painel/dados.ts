@@ -27,7 +27,11 @@ export type Solicitacao = {
 
 export type Evento = {
   id: string;
-  tipo: "abertura" | "alteracao_status" | "alteracao_prioridade" | "alteracao_responsavel" | "observacao";
+  tipo: "abertura"
+  | "alteracao_status"
+  | "alteracao_prioridade"
+  | "alteracao_responsavel"
+  | "observacao";
   created_at: string;
   autor: Pessoa | null;
   observacao: string | null;
@@ -62,20 +66,30 @@ const COLUNAS = `id, numero, titulo, descricao, local, status, prioridade, respo
   responsavel:profiles!solicitacoes_responsavel_id_fkey(id, nome)`;
 
 // MVP-05: lista com filtro opcional por status e paginação.
-export async function listarSolicitacoes(supabase: Supabase, status: string | null, pagina: number) {
+export async function listarSolicitacoes(
+  supabase: Supabase,
+  status: string | null,
+  pagina: number
+) {
   const inicio = (pagina - 1) * ITENS_POR_PAGINA;
   const fim = inicio + ITENS_POR_PAGINA - 1;
 
   let consulta = supabase.from("solicitacoes").select(COLUNAS, { count: "exact" });
   if (status) consulta = consulta.eq("status", status);
 
-  const { data, count, error } = await consulta.order("created_at", { ascending: false }).range(inicio, fim);
+  const { data, count, error } = await consulta
+    .order("created_at", { ascending: false })
+    .range(inicio, fim);
   if (error) throw new Error("Erro ao listar solicitações");
   return { solicitacoes: data as unknown as Solicitacao[], total: count ?? 0 };
 }
 
 export async function buscarSolicitacao(supabase: Supabase, id: string) {
-  const { data, error } = await supabase.from("solicitacoes").select(COLUNAS).eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("solicitacoes")
+    .select(COLUNAS)
+    .eq("id", id)
+    .maybeSingle();
   if (error) throw new Error("Erro ao buscar solicitação");
   return data as unknown as Solicitacao | null; // null = não existe ou não tem acesso
 }
@@ -84,9 +98,11 @@ export async function buscarSolicitacao(supabase: Supabase, id: string) {
 export async function buscarHistorico(supabase: Supabase, solicitacaoId: string) {
   const { data, error } = await supabase
     .from("historico")
-    .select(`id, tipo, created_at, observacao, status_anterior, status_novo, prioridade_anterior, prioridade_nova,
+    .select(
+      `id, tipo, created_at, observacao, status_anterior, status_novo, prioridade_anterior, prioridade_nova,
       autor:profiles!historico_autor_id_fkey(id, nome),
-      responsavel_novo:profiles!historico_responsavel_novo_fkey(id, nome)`)
+      responsavel_novo:profiles!historico_responsavel_novo_fkey(id, nome)`
+    )
     .eq("solicitacao_id", solicitacaoId)
     .order("created_at");
   if (error) throw new Error("Erro ao buscar histórico");

@@ -34,18 +34,18 @@ export function getSupabaseConfig(env: Environment) {
       : !isLoopback && parsed.protocol === "https:";
 
   if (!isCompatibleWithEnvironment) {
-    throw new Error("URL incompatível com o ambiente: local exige loopback; cloud exige HTTPS fora de loopback.");
+    throw new Error(
+      "URL incompatível com o ambiente: local exige loopback; cloud exige HTTPS fora de loopback."
+    );
   }
 
   const hasExtraUrlParts =
-    parsed.username ||
-    parsed.password ||
-    parsed.pathname !== "/" ||
-    parsed.search ||
-    parsed.hash;
+    parsed.username || parsed.password || parsed.pathname !== "/" || parsed.search || parsed.hash;
 
   if (hasExtraUrlParts) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL deve conter apenas a origem, sem credenciais, caminho ou parâmetros.");
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL deve conter apenas a origem, sem credenciais, caminho ou parâmetros."
+    );
   }
 
   const publishableKey = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -76,6 +76,8 @@ export function validateSupabasePublishableKey(
   const isAllowedLegacyKey = environment === "local" && legacyAnon;
 
   if (!isPublishableKey && !isAllowedLegacyKey) {
-    throw new Error("Use uma chave publicável sb_publishable_; apenas local aceita a chave anon legada. Chaves privilegiadas são proibidas.");
+    throw new Error(
+      "Use uma chave publicável sb_publishable_; apenas local aceita a chave anon legada. Chaves privilegiadas são proibidas."
+    );
   }
 }

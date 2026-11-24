@@ -11,7 +11,8 @@ export default async function PaginaEntrar() {
   return (
     <main className={estilos.loginPage}>
       <div className={estilos.loginCard}>
-        <div className={estilos.logo}><span className={estilos.logoIcon} aria-hidden="true">✚</span>FixIt</div>
+        <div className={estilos.logo}>
+          <span className={estilos.logoIcon} aria-hidden="true">✚</span>FixIt</div>
         <h1>Acesso da equipe</h1>
         <p className={estilos.subtitulo}>Acesso para Gestor e Manutentor.</p>
         <FormEntrar />

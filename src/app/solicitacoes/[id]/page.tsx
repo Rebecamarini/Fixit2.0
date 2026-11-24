@@ -16,11 +16,40 @@ export default async function Detalhes({ params }: { params: Promise<{ id: strin
   const eventos = await buscarHistorico(client, item.id);
   return <ClienteLayout nome={perfil.nome}>
     <Link className={styles.voltar} href="/solicitacoes">← Minhas solicitações</Link>
-    <section className={styles.card}><header className={styles.cabecalho}><div><p className={styles.numero}>Solicitação #{item.numero}</p><h2>{item.titulo}</h2></div><span className={styles.status}>{NOME_STATUS[item.status]}</span></header>
+    <section className={styles.card}>
+      <header className={styles.cabecalho}>
+        <div>
+          <p className={styles.numero}>Solicitação #{item.numero}</p>
+          <h2>{item.titulo}</h2>
+        </div>
+        <span className={styles.status}>{NOME_STATUS[item.status]}</span>
+      </header>
       <dl className={styles.informacoes}>
-        <div><dt>Localização</dt><dd>{item.local}</dd></div><div><dt>Abertura</dt><dd>{formatarData(item.created_at)}</dd></div>
-        <div><dt>Prioridade</dt><dd>{item.prioridade ? NOME_PRIORIDADE[item.prioridade] : "Não definida"}</dd></div><div><dt>Responsável</dt><dd>{item.responsavel?.nome ?? "Não atribuído"}</dd></div>
-      </dl><div className={styles.descricao}><h3>Descrição</h3><p>{item.descricao}</p></div>
-    </section><section className={styles.card}><h2>Acompanhamento e histórico</h2>{eventos.length ? <Historico eventos={eventos} /> : <p>Nenhum evento disponível.</p>}</section>
+        <div>
+          <dt>Localização</dt>
+          <dd>{item.local}</dd>
+        </div>
+        <div>
+          <dt>Abertura</dt>
+          <dd>{formatarData(item.created_at)}</dd>
+        </div>
+        <div>
+          <dt>Prioridade</dt>
+          <dd>{item.prioridade ? NOME_PRIORIDADE[item.prioridade] : "Não definida"}</dd>
+        </div>
+        <div>
+          <dt>Responsável</dt>
+          <dd>{item.responsavel?.nome ?? "Não atribuído"}</dd>
+        </div>
+      </dl>
+      <div className={styles.descricao}>
+        <h3>Descrição</h3>
+        <p>{item.descricao}</p>
+      </div>
+    </section>
+    <section className={styles.card}>
+      <h2>Acompanhamento e histórico</h2>
+      {eventos.length ? <Historico eventos={eventos} /> : <p>Nenhum evento disponível.</p>}
+    </section>
   </ClienteLayout>;
 }
