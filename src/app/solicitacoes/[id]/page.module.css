@@ -54,11 +54,26 @@
   font-weight: 600;
 }
 
-.pendente { color: #936217; background: #fff3d8; }
-.aprovada { color: #6d38a1; background: #f0e5ff; }
-.emAtendimento { color: #196aa6; background: #dfefff; }
-.concluida { color: #18724b; background: #e1f6eb; }
-.descartada { color: #ae3030; background: #ffe4e4; }
+.pendente {
+  color: #936217;
+  background: #fff3d8;
+}
+.aprovada {
+  color: #6d38a1;
+  background: #f0e5ff;
+}
+.emAtendimento {
+  color: #196aa6;
+  background: #dfefff;
+}
+.concluida {
+  color: #18724b;
+  background: #e1f6eb;
+}
+.descartada {
+  color: #ae3030;
+  background: #ffe4e4;
+}
 
 .informacoes {
   display: grid;
@@ -153,9 +168,19 @@
 }
 
 @media (max-width: 650px) {
-  .card { padding: 18px; }
-  .informacoes { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .historico { padding-left: 6px; }
+  .card {
+    padding: 18px;
+  }
+  .informacoes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .historico {
+    padding-left: 6px;
+  }
 }
 
-.descricao p, .historico p { white-space: pre-wrap; }
+.descricao p,
+.historico p {
+  white-space: pre-wrap;
+}

@@ -5,7 +5,14 @@
 import { useActionState } from "react";
 import { LISTA_PRIORIDADES, NOME_PRIORIDADE, type Status } from "../../lib/painel/regras";
 import type { Pessoa } from "../../lib/painel/dados";
-import { adicionarObservacao, entrar, mudarStatus, salvarOrganizacao, sair, type Resposta } from "./acoes";
+import {
+  adicionarObservacao,
+  entrar,
+  mudarStatus,
+  salvarOrganizacao,
+  sair,
+  type Resposta
+} from "./acoes";
 import estilos from "./painel.module.css";
 
 function Mensagem({ resposta }: { resposta: Resposta }) {
@@ -43,7 +50,13 @@ export function FormSair() {
 }
 
 // Um botão que muda o status. Pede confirmação antes de enviar (MVP-06).
-export function BotaoStatus(props: { id: string; status: Status; texto: string; confirmacao: string; perigo?: boolean }) {
+export function BotaoStatus(props: {
+  id: string;
+  status: Status;
+  texto: string;
+  confirmacao: string;
+  perigo?: boolean
+}) {
   const [resposta, acao, carregando] = useActionState(mudarStatus, null);
   return (
     <form

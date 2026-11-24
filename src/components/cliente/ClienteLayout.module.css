@@ -36,9 +36,17 @@
   padding: 31px 36px 60px;
 }
 
-.layout a { margin-top: 0; }
-.layout h1 { font-size: 28px; }
-.layout p, .layout dd, .layout h1 { overflow-wrap: anywhere; }
+.layout a {
+  margin-top: 0;
+}
+.layout h1 {
+  font-size: 28px;
+}
+.layout p,
+.layout dd,
+.layout h1 {
+  overflow-wrap: anywhere;
+}
 
 .boasVindas {
   display: flex;

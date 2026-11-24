@@ -5,5 +5,13 @@ import FormularioSolicitacao from "./form";
 
 export default async function NovaSolicitacao() {
   const { perfil } = await exigirCliente();
-  return <ClienteLayout nome={perfil.nome}><div className={layout.boasVindas}><div><h1>Nova solicitação</h1><p>Descreva o problema de manutenção e onde ele está.</p></div></div><FormularioSolicitacao /></ClienteLayout>;
+  return <ClienteLayout nome={perfil.nome}>
+    <div className={layout.boasVindas}>
+      <div>
+        <h1>Nova solicitação</h1>
+        <p>Descreva o problema de manutenção e onde ele está.</p>
+      </div>
+    </div>
+    <FormularioSolicitacao />
+  </ClienteLayout>;
 }

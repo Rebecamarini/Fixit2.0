@@ -6,7 +6,13 @@ export type Papel = "cliente" | "gestor" | "manutentor";
 export type Status = "pendente" | "aprovada" | "em_atendimento" | "concluida" | "descartada";
 export type Prioridade = "baixa" | "media" | "alta";
 
-export const LISTA_STATUS: Status[] = ["pendente", "aprovada", "em_atendimento", "concluida", "descartada"];
+export const LISTA_STATUS: Status[] = [
+  "pendente",
+  "aprovada",
+  "em_atendimento",
+  "concluida",
+  "descartada"
+];
 export const LISTA_PRIORIDADES: Prioridade[] = ["baixa", "media", "alta"];
 
 // Textos que aparecem na tela para cada valor do banco
@@ -48,7 +54,8 @@ export function acoesPermitidas(usuario: Usuario, solicitacao: Solicitacao) {
 // Traduz os códigos de erro do banco (contrato MVP-02) para mensagens.
 export function mensagemDeErro(codigo: string | undefined): string {
   if (codigo === "42501") return "Você não pode fazer essa ação agora. A página foi atualizada.";
-  if (codigo === "23514") return "Dados inválidos. Lembre: para iniciar o atendimento a prioridade e o responsável precisam estar definidos.";
+  if (codigo === "23514")
+    return "Dados inválidos. Lembre: para iniciar o atendimento a prioridade e o responsável precisam estar definidos.";
   if (!codigo) {
     return "Não foi possível confirmar a operação. Confira os dados e o histórico atualizados antes de enviar novamente.";
   }
@@ -56,5 +63,9 @@ export function mensagemDeErro(codigo: string | undefined): string {
 }
 
 export function formatarData(data: string): string {
-  return new Date(data).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
+  return new Date(data).toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo"
+  });
 }

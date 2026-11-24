@@ -38,11 +38,21 @@ function LinhaChamado({ chamado, baseHref }: { chamado: Chamado; baseHref: strin
         <span className={styles.local}>{chamado.local}</span>
       </td>
       <td>{chamado.solicitante}</td>
-      <td><span className={`${styles.status} ${classesStatus[chamado.status]}`}>{chamado.status}</span></td>
-      <td><span className={styles.prioridade}>{chamado.prioridade}</span></td>
-      <td><time dateTime={chamado.data}>{formatarData(chamado.data)}</time></td>
       <td>
-        <Link className={styles.detalhes} href={`${baseHref}/${chamado.id}`} aria-label={`Ver detalhes da solicitação #${chamado.numero}`}>
+        <span className={`${styles.status} ${classesStatus[chamado.status]}`}>{chamado.status}</span>
+      </td>
+      <td>
+        <span className={styles.prioridade}>{chamado.prioridade}</span>
+      </td>
+      <td>
+        <time dateTime={chamado.data}>{formatarData(chamado.data)}</time>
+      </td>
+      <td>
+        <Link
+          className={styles.detalhes}
+          href={`${baseHref}/${chamado.id}`}
+          aria-label={`Ver detalhes da solicitação #${chamado.numero}`}
+        >
           Ver detalhes <span aria-hidden="true">→</span>
         </Link>
       </td>
@@ -66,7 +76,11 @@ function CabecalhoTabela() {
   );
 }
 
-export default function TabelaChamados({ chamados, variante = "recentes", children }: TabelaChamadosProps) {
+export default function TabelaChamados({
+  chamados,
+  variante = "recentes",
+  children
+}: TabelaChamadosProps) {
   const recentes = variante === "recentes";
   const titulo = recentes ? "Solicitações recentes" : "Minhas solicitações";
   const baseHref = "/solicitacoes";
@@ -75,13 +89,18 @@ export default function TabelaChamados({ chamados, variante = "recentes", childr
       {recentes && (
         <header className={styles.cabecalho}>
           <h2>{titulo}</h2>
-          <Link className={styles.verTodos} href={baseHref}>Ver todos <span aria-hidden="true">→</span></Link>
+          <Link className={styles.verTodos} href={baseHref}>Ver todos <span aria-hidden="true">→</span>
+          </Link>
         </header>
       )}
       {children}
       <div className={styles.rolagem} role="region" aria-label={`Tabela: ${titulo}`} tabIndex={0}>
         <table className={styles.tabela}>
-          <caption className={styles.somenteLeitor}>{recentes ? "Últimas solicitações de manutenção" : "Solicitações de manutenção do Cliente"}</caption>
+          <caption className={styles.somenteLeitor}>
+            {recentes
+              ? "Últimas solicitações de manutenção"
+              : "Solicitações de manutenção do Cliente"}
+          </caption>
           <CabecalhoTabela />
           <tbody>
             {chamados.length === 0 ? (
@@ -91,9 +110,11 @@ export default function TabelaChamados({ chamados, variante = "recentes", childr
                   {recentes && <p>Suas solicitações aparecerão aqui quando forem registradas.</p>}
                 </td>
               </tr>
-            ) : chamados.map((chamado) => (
-              <LinhaChamado key={chamado.id} chamado={chamado} baseHref={baseHref} />
-            ))}
+            ) :
+              chamados.map((chamado) => (
+                <LinhaChamado key={chamado.id} chamado={chamado} baseHref={baseHref} />
+              ))
+            }
           </tbody>
         </table>
       </div>

@@ -1,5 +1,11 @@
 // Pedaços de tela reaproveitados na lista e nos detalhes.
-import { NOME_PRIORIDADE, NOME_STATUS, formatarData, type Prioridade, type Status } from "../../lib/painel/regras";
+import {
+  NOME_PRIORIDADE,
+  NOME_STATUS,
+  formatarData,
+  type Prioridade,
+  type Status
+} from "../../lib/painel/regras";
 import type { Evento } from "../../lib/painel/dados";
 import estilos from "./painel.module.css";
 
@@ -24,7 +30,9 @@ function descreverEvento(evento: Evento): string {
     return `Mudou a prioridade para ${nova}.`;
   }
   // alteracao_responsavel
-  return evento.responsavel_novo ? `Atribuiu a ${evento.responsavel_novo.nome}.` : "Removeu o responsável.";
+  return evento.responsavel_novo
+    ? `Atribuiu a ${evento.responsavel_novo.nome}.`
+    : "Removeu o responsável.";
 }
 
 export function Historico({ eventos }: { eventos: Evento[] }) {

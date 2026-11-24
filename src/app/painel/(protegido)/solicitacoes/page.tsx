@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { normalizarFiltros } from "../../../../lib/painel/parametros";
 import { exigirUsuarioDaEquipe, listarSolicitacoes } from "../../../../lib/painel/dados";
-import { ITENS_POR_PAGINA, LISTA_STATUS, NOME_STATUS, formatarData } from "../../../../lib/painel/regras";
+import {
+  ITENS_POR_PAGINA,
+  LISTA_STATUS,
+  NOME_STATUS,
+  formatarData
+} from "../../../../lib/painel/regras";
 import { SeloPrioridade, SeloStatus } from "../../componentes";
 import estilos from "../../painel.module.css";
 
@@ -23,12 +28,25 @@ export default async function PaginaLista({ searchParams }: Props) {
   return (
     <>
       <h1>{perfil.papel === "gestor" ? "Todas as solicitações" : "Minhas atribuições"}</h1>
-      <p className={estilos.subtitulo}>{perfil.papel === "gestor" ? "Organize e acompanhe as solicitações de manutenção." : "Acompanhe as solicitações atribuídas a você."}</p>
+      <p className={estilos.subtitulo}>
+        {perfil.papel === "gestor"
+          ? "Organize e acompanhe as solicitações de manutenção."
+          : "Acompanhe as solicitações atribuídas a você."}
+      </p>
 
       <nav className={estilos.filtros} aria-label="Filtrar solicitações por status">
-        <Link href="/painel/solicitacoes" className={!status ? estilos.ativo : ""} aria-current={!status ? "page" : undefined}>Todos</Link>
+        <Link
+          href="/painel/solicitacoes"
+          className={!status ? estilos.ativo : ""}
+          aria-current={!status ? "page" : undefined}
+        >Todos</Link>
         {LISTA_STATUS.map(s => (
-          <Link key={s} href={`?status=${s}`} className={status === s ? estilos.ativo : ""} aria-current={status === s ? "page" : undefined}>
+          <Link
+            key={s}
+            href={`?status=${s}`}
+            className={status === s ? estilos.ativo : ""}
+            aria-current={status === s ? "page" : undefined}
+          >
             {NOME_STATUS[s]}
           </Link>
         ))}
@@ -37,7 +55,12 @@ export default async function PaginaLista({ searchParams }: Props) {
       {solicitacoes.length === 0 ? (
         <p className={estilos.vazio}>Nenhuma solicitação encontrada.</p>
       ) : (
-        <div className={estilos.tabelaRolagem} role="region" aria-label="Tabela de solicitações" tabIndex={0}>
+        <div
+          className={estilos.tabelaRolagem}
+          role="region"
+          aria-label="Tabela de solicitações"
+          tabIndex={0}
+        >
           <table className={estilos.tabela}>
             <caption className={estilos.somenteLeitor}>{perfil.papel === "gestor" ? "Todas as solicitações" : "Minhas atribuições"}</caption>
             <thead>
@@ -55,11 +78,19 @@ export default async function PaginaLista({ searchParams }: Props) {
               {solicitacoes.map(s => (
                 <tr key={s.id}>
                   <td>#{s.numero}</td>
-                  <td><Link href={`/painel/solicitacoes/${s.id}`}>{s.titulo}</Link></td>
+                  <td>
+                    <Link href={`/painel/solicitacoes/${s.id}`}>{s.titulo}</Link>
+                  </td>
                   <td>{s.local}</td>
-                  <td><SeloStatus status={s.status} /></td>
-                  <td><SeloPrioridade prioridade={s.prioridade} /></td>
-                  <td>{s.responsavel?.nome ?? <span className={estilos.vazio}>Sem responsável</span>}</td>
+                  <td>
+                    <SeloStatus status={s.status} />
+                  </td>
+                  <td>
+                    <SeloPrioridade prioridade={s.prioridade} />
+                  </td>
+                  <td>
+                    {s.responsavel?.nome ?? <span className={estilos.vazio}>Sem responsável</span>}
+                  </td>
                   <td>{formatarData(s.created_at)}</td>
                 </tr>
               ))}

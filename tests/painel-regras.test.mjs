@@ -44,5 +44,8 @@ test('falha de transporte orienta conferir o histórico antes de reenviar', () =
     mensagemDeErro(undefined),
     'Não foi possível confirmar a operação. Confira os dados e o histórico atualizados antes de enviar novamente.',
   );
-  assert.equal(mensagemDeErro('42501'), 'Você não pode fazer essa ação agora. A página foi atualizada.');
+  assert.equal(
+    mensagemDeErro('42501'),
+    'Você não pode fazer essa ação agora. A página foi atualizada.'
+  );
 });

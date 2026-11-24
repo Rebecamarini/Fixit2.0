@@ -1,7 +1,12 @@
 // Detalhes de uma solicitação + ações (MVP-06, 07, 09 e 10) + histórico.
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { buscarHistorico, buscarSolicitacao, exigirUsuarioDaEquipe, listarManutentores } from "../../../../../lib/painel/dados";
+import {
+  buscarHistorico,
+  buscarSolicitacao,
+  exigirUsuarioDaEquipe,
+  listarManutentores
+} from "../../../../../lib/painel/dados";
 import { idSolicitacaoValido } from "../../../../../lib/painel/parametros";
 import { acoesPermitidas, formatarData } from "../../../../../lib/painel/regras";
 import { Historico, SeloPrioridade, SeloStatus } from "../../../componentes";
@@ -33,12 +38,24 @@ export default async function PaginaDetalhe({ params }: Props) {
         <div>
           <section className={estilos.cartao}>
             <h2>Dados</h2>
-            <p><b>Solicitante:</b> {solicitacao.solicitante?.nome}</p>
-            <p><b>Local:</b> {solicitacao.local}</p>
-            <p><b>Aberta em:</b> {formatarData(solicitacao.created_at)}</p>
-            <p><b>Prioridade:</b> <SeloPrioridade prioridade={solicitacao.prioridade} /></p>
-            <p><b>Responsável:</b> {solicitacao.responsavel?.nome ?? "Sem responsável"}</p>
-            <p><b>Descrição:</b> {solicitacao.descricao}</p>
+            <p>
+              <b>Solicitante:</b> {solicitacao.solicitante?.nome}
+            </p>
+            <p>
+              <b>Local:</b> {solicitacao.local}
+            </p>
+            <p>
+              <b>Aberta em:</b> {formatarData(solicitacao.created_at)}
+            </p>
+            <p>
+              <b>Prioridade:</b> <SeloPrioridade prioridade={solicitacao.prioridade} />
+            </p>
+            <p>
+              <b>Responsável:</b> {solicitacao.responsavel?.nome ?? "Sem responsável"}
+            </p>
+            <p>
+              <b>Descrição:</b> {solicitacao.descricao}
+            </p>
           </section>
 
           <section className={estilos.cartao}>
@@ -52,8 +69,19 @@ export default async function PaginaDetalhe({ params }: Props) {
 
           {acoes.aprovarOuDescartar && (
             <div className={estilos.botoes}>
-              <BotaoStatus id={id} status="aprovada" texto="Aprovar" confirmacao="Aprovar esta solicitação?" />
-              <BotaoStatus id={id} status="descartada" texto="Descartar" perigo confirmacao="Descartar esta solicitação? Não dá para desfazer." />
+              <BotaoStatus
+                id={id}
+                status="aprovada"
+                texto="Aprovar"
+                confirmacao="Aprovar esta solicitação?"
+              />
+              <BotaoStatus
+                id={id}
+                status="descartada"
+                texto="Descartar"
+                perigo
+                confirmacao="Descartar esta solicitação? Não dá para desfazer."
+              />
             </div>
           )}
 
@@ -68,16 +96,28 @@ export default async function PaginaDetalhe({ params }: Props) {
           )}
 
           {acoes.iniciar && (
-            <BotaoStatus id={id} status="em_atendimento" texto="Iniciar atendimento" confirmacao="Iniciar o atendimento?" />
+            <BotaoStatus
+              id={id}
+              status="em_atendimento"
+              texto="Iniciar atendimento"
+              confirmacao="Iniciar o atendimento?"
+            />
           )}
 
           {acoes.concluir && (
-            <BotaoStatus id={id} status="concluida" texto="Concluir chamado" confirmacao="Concluir o chamado? Ele será encerrado." />
+            <BotaoStatus
+              id={id}
+              status="concluida"
+              texto="Concluir chamado"
+              confirmacao="Concluir o chamado? Ele será encerrado."
+            />
           )}
 
           {acoes.observar && <FormObservacao id={id} />}
 
-          {!Object.values(acoes).includes(true) && <p className={estilos.vazio}>Nenhuma ação disponível.</p>}
+          {!Object.values(acoes).includes(true) &&
+            <p className={estilos.vazio}>Nenhuma ação disponível.</p>
+          }
         </section>
       </div>
     </>

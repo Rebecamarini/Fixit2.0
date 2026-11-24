@@ -10,9 +10,15 @@ test('falha ao fechar navegador não impede remover app e limpar banco', async (
   const directory = await mkdtemp(join(tmpdir(), 'fixit-cleanup-test-'));
   let cleaned = false;
   const failures = await cleanupNextAuth({
-    browser: { close: async () => { throw new Error('sensitive browser detail'); } },
+    browser: {
+      close: async () => {
+        throw new Error('sensitive browser detail');
+      }
+    },
     directory,
-    cleanupFixtures: async () => { cleaned = true; },
+    cleanupFixtures: async () => {
+      cleaned = true;
+    },
   });
   assert.deepEqual(failures, ['browser']);
   assert(cleaned);
@@ -23,7 +29,10 @@ test('falha ao remover app não impede limpeza do banco e preserva ambas as falh
   let attempted = false;
   const failures = await cleanupNextAuth({
     directory: '\0',
-    cleanupFixtures: async () => { attempted = true; throw new Error('sensitive SQL detail'); },
+    cleanupFixtures: async () => {
+      attempted = true;
+      throw new Error('sensitive SQL detail');
+    },
   });
   assert(attempted);
   assert.deepEqual(failures, ['app', 'fixtures']);
@@ -31,8 +40,20 @@ test('falha ao remover app não impede limpeza do banco e preserva ambas as falh
 });
 
 test('falha ao terminar servidor não bloqueia limpeza de fixtures', async () => {
-  const server = Object.assign(new EventEmitter(), { exitCode: null, signalCode: null, kill: () => false });
+  const server = Object.assign(new EventEmitter(), {
+    exitCode: null,
+    signalCode: null,
+    kill: () => false
+  });
   let cleaned = false;
-  assert.deepEqual(await cleanupNextAuth({ server, cleanupFixtures: async () => { cleaned = true; } }), ['server']);
+  assert.deepEqual(
+    await cleanupNextAuth({
+      server,
+      cleanupFixtures: async () => {
+        cleaned = true;
+      }
+    }),
+    ['server']
+  );
   assert(cleaned);
 });

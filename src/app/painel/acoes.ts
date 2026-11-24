@@ -19,11 +19,12 @@ export async function entrar(_anterior: Resposta, form: FormData): Promise<Respo
   const resultado = await auth.signIn({ email: form.get("email"), password: form.get("senha") });
 
   if (!resultado.ok) {
-    const mensagem = resultado.error === "unavailable"
-      ? "Não foi possível acessar o serviço. Tente novamente mais tarde."
-      : resultado.error === "profile_missing" || resultado.error === "profile_inactive"
-        ? "Seu perfil não tem acesso ao painel. Procure o responsável pelo sistema."
-        : "E-mail ou senha incorretos.";
+    const mensagem =
+      resultado.error === "unavailable"
+        ? "Não foi possível acessar o serviço. Tente novamente mais tarde."
+        : resultado.error === "profile_missing" || resultado.error === "profile_inactive"
+          ? "Seu perfil não tem acesso ao painel. Procure o responsável pelo sistema."
+          : "E-mail ou senha incorretos.";
     return { ok: false, mensagem };
   }
   if (resultado.profile.papel === "cliente") {
@@ -37,7 +38,10 @@ export async function sair(): Promise<Resposta> {
   const supabase = await createServerSupabaseClient();
   const resultado = await createAuth(supabase).signOut();
   if (!resultado.ok) {
-    return { ok: false, mensagem: "Não foi possível sair. Sua sessão pode continuar ativa. Tente novamente." };
+    return {
+      ok: false,
+      mensagem: "Não foi possível sair. Sua sessão pode continuar ativa. Tente novamente."
+    };
   }
   redirect("/painel/entrar");
 }
@@ -88,7 +92,10 @@ export async function adicionarObservacao(_anterior: Resposta, form: FormData): 
   const texto = String(form.get("observacao")).trim();
   if (texto === "") return { ok: false, mensagem: "Escreva a observação." };
 
-  const { error } = await usuario.supabase.rpc("adicionar_observacao", { p_id: id, p_observacao: texto });
+  const { error } = await usuario.supabase.rpc("adicionar_observacao", {
+    p_id: id,
+    p_observacao: texto
+  });
 
   revalidatePath(`/painel/solicitacoes/${id}`);
   if (error) return { ok: false, mensagem: mensagemDeErro(error.code) };

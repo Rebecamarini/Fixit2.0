@@ -18,8 +18,18 @@ const admin = createClient(url, chaveAdmin, { auth: { persistSession: false } })
 // 2) Contas da demonstração
 const contas = [
   { nome: 'Gabriela Gestora', email: 'gestor@fixit.local', senha: 'gestor123', papel: 'gestor' },
-  { nome: 'Marcos Manutentor', email: 'manutentor@fixit.local', senha: 'manut123', papel: 'manutentor' },
-  { nome: 'Nina Manutentora', email: 'manutentor2@fixit.local', senha: 'manut123', papel: 'manutentor' },
+  {
+    nome: 'Marcos Manutentor',
+    email: 'manutentor@fixit.local',
+    senha: 'manut123',
+    papel: 'manutentor'
+  },
+  {
+    nome: 'Nina Manutentora',
+    email: 'manutentor2@fixit.local',
+    senha: 'manut123',
+    papel: 'manutentor'
+  },
   { nome: 'Carla Cliente', email: 'cliente@fixit.local', senha: 'cliente123', papel: 'cliente' },
 ];
 
@@ -33,7 +43,9 @@ for (const conta of contas) {
     app_metadata: conta.papel === 'cliente' ? {} : { fixit_papel: conta.papel },
   });
   if (error && error.code !== 'email_exists') throw error;
-  console.log(error ? `Já existia: ${conta.email}` : `Conta criada: ${conta.email} (${conta.papel})`);
+  console.log(
+    error ? `Já existia: ${conta.email}` : `Conta criada: ${conta.email} (${conta.papel})`
+  );
 }
 
 // Faz login como uma pessoa e devolve o cliente Supabase dela (as RPCs usam essa sessão)
@@ -56,9 +68,13 @@ const marcos = await entrarComo('manutentor@fixit.local', 'manut123');
 const nina = await entrarComo('manutentor2@fixit.local', 'manut123');
 
 // 3) Solicitações (só cria se a Cliente ainda não tiver nenhuma, para não duplicar)
-const { count } = await cliente.supabase.from('solicitacoes').select('id', { count: 'exact', head: true });
+const { count } = await cliente.supabase
+  .from('solicitacoes')
+  .select('id', { count: 'exact', head: true });
 if (count > 0) {
-  console.log('Solicitações da demonstração já existem. Para recomeçar do zero: npm run demo:resetar');
+  console.log(
+    'Solicitações da demonstração já existem. Para recomeçar do zero: npm run demo:resetar'
+  );
   process.exit(0);
 }
 
@@ -66,17 +82,36 @@ const abrir = (titulo, descricao, local) =>
   rpc(cliente, 'abrir_solicitacao', { p_titulo: titulo, p_descricao: descricao, p_local: local });
 
 // Concluída: passou pelo fluxo inteiro
-const s1 = await abrir('Lâmpada queimada', 'A lâmpada do corredor não acende desde ontem.', 'Bloco C - Corredor 2');
+const s1 = await abrir(
+  'Lâmpada queimada',
+  'A lâmpada do corredor não acende desde ontem.',
+  'Bloco C - Corredor 2'
+);
 await rpc(gestor, 'transicionar_solicitacao', { p_id: s1.id, p_status: 'aprovada' });
-await rpc(gestor, 'organizar_solicitacao', { p_id: s1.id, p_prioridade: 'baixa', p_responsavel_id: marcos.id });
+await rpc(gestor, 'organizar_solicitacao', {
+  p_id: s1.id,
+  p_prioridade: 'baixa',
+  p_responsavel_id: marcos.id
+});
 await rpc(marcos, 'transicionar_solicitacao', { p_id: s1.id, p_status: 'em_atendimento' });
-await rpc(marcos, 'adicionar_observacao', { p_id: s1.id, p_observacao: 'Lâmpada trocada por uma de LED.' });
+await rpc(marcos, 'adicionar_observacao', {
+  p_id: s1.id,
+  p_observacao: 'Lâmpada trocada por uma de LED.'
+});
 await rpc(marcos, 'transicionar_solicitacao', { p_id: s1.id, p_status: 'concluida' });
 
 // Em atendimento com a Nina
-const s2 = await abrir('Ar-condicionado pingando', 'Água escorrendo na parede da sala.', 'Sala 104');
+const s2 = await abrir(
+  'Ar-condicionado pingando',
+  'Água escorrendo na parede da sala.',
+  'Sala 104'
+);
 await rpc(gestor, 'transicionar_solicitacao', { p_id: s2.id, p_status: 'aprovada' });
-await rpc(gestor, 'organizar_solicitacao', { p_id: s2.id, p_prioridade: 'media', p_responsavel_id: nina.id });
+await rpc(gestor, 'organizar_solicitacao', {
+  p_id: s2.id,
+  p_prioridade: 'media',
+  p_responsavel_id: nina.id
+});
 await rpc(nina, 'transicionar_solicitacao', { p_id: s2.id, p_status: 'em_atendimento' });
 
 // Descartada
@@ -88,4 +123,6 @@ await abrir('Vazamento na pia', 'A pia da copa está vazando sem parar.', 'Copa 
 await abrir('Porta emperrada', 'A porta do laboratório não fecha.', 'Laboratório 3');
 await abrir('Tomada solta', 'A tomada está se soltando da parede.', 'Sala 305');
 
-console.log('Pronto! 6 solicitações criadas. Rode "npm run dev" e abra http://127.0.0.1:3000/painel/entrar');
+console.log(
+  'Pronto! 6 solicitações criadas. Rode "npm run dev" e abra http://127.0.0.1:3000/painel/entrar'
+);
